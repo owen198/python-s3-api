@@ -16,6 +16,8 @@ import struct
 
 import requests
 
+# import scipy
+
 from flask import Flask
 from flask import request
 from flask import jsonify
@@ -47,7 +49,6 @@ def get_content():
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
-    
     DATE = datetime.datetime.strptime(date_obj, '%Y-%m-%dT%H:%M:%S.%fZ')
     DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)
     DATE = DATE.strftime('%Y-%m-%d')
@@ -55,12 +56,15 @@ def get_content():
     EQU_ID = target_obj.split('@')[0]
     FEATURE = target_obj.split('@')[1]
     TYPE = target_obj.split('@')[2]
+    SignalType = target_obj.split('@')[3]
     SPECIFIC_TIME = target_obj.split('@')[-1]
-    
+        
     print('EQU_ID=' + EQU_ID)
     print('Feature=' + FEATURE)
     print('Type=' + TYPE)
+    print('SignalType=' + SignalType)
     print('Query Date=' + DATE)
+    
     
     # User specified a timestamp
     SPECIFIC_TIME = SPECIFIC_TIME.split('\.')[0]
@@ -98,7 +102,14 @@ def get_content():
         return 'File not found'
 
     BIN_DF, BIN_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
-    #insert_to_influxdb(BIN_DF)
+    if SignalType=='velocity':
+        print('velocity change, size from:')
+        print(BIN_DF.shape)
+        BIN_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(BIN_DF.values.T,1.0/8192)).T
+        print('velocity change, size to:')
+        print(BIN_DF.shape)
+        print(BIN_DF.values)
+    insert_to_influxdb(BIN_DF)
 
     # calculate start-time and end-time for grafana representation
     HOUR = FILE_NAME.split('-')[3]
@@ -223,6 +234,7 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     
     jsonarr = json.dumps([dict_data_mean])
     
+    
     return str(jsonarr)
     
 
@@ -265,9 +277,26 @@ def query_timestamp (TYPE, feature, ChannelName, time_start):
     index_series = data[feature]
     dt64 = index_series[index_series == max_value].index.values[0]
     TS = datetime.datetime.utcfromtimestamp(dt64.tolist()/1e9) + datetime.timedelta(hours=8)
-
+    print('TS=',TS)
     return TS
 
+def get_velocity_mms_from_acceleration_g(data, TS):
+    from scipy.integrate import cumtrapz
+    '''
+    Returns the velocity time series using simple integration.
+    
+    :param time_step: float: Time-series time-step (s)
+    :param acceleration: numpy.ndarray: the acceleration
+    :returns:
+        velocity - Velocity Time series (mm/s)
+    '''
+    acceleration = (data - data.mean()) * 9806
+    velocity = TS * cumtrapz(acceleration, initial=0.)
+    print('TS=',TS)
+    print('DATA=',data)
+    print('Acc=',acceleration)
+    print('Vel=',velocity)
+    return velocity
 
 def convert_equ_name (EQU_NAME):
     
@@ -338,6 +367,8 @@ def convert_bin (filename, DISPLAYPOINT):
     size = [hexint(bytes_read[(i*4):((i+1)*4)]) for i in range(2)]
     signal = [struct.unpack('f',bytes_read[(i*4):((i+1)*4)]) for i in range(2,2+size[0]*size[1])]
     data = np.array(signal).reshape(size)
+    # print('data here')
+    print('Data=',data)
     return_df = pd.DataFrame(data = data)
     return_df = return_df.T
     file_length = len(return_df)
