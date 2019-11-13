@@ -109,7 +109,7 @@ def get_content():
         print('velocity change, size to:')
         print(BIN_DF.shape)
         print(BIN_DF.values)
-    insert_to_influxdb(BIN_DF)
+    # insert_to_influxdb(BIN_DF)
 
     # calculate start-time and end-time for grafana representation
     HOUR = FILE_NAME.split('-')[3]
@@ -436,9 +436,12 @@ def read_influxdb_data(host='192.168.123.245',
         return None    
     
     dff = df.groupby('id')
-    columns = [name for name, group in dff]
-    groups = [group['val'] for name, group in dff]
-    
+
+    # columns = [name for name, group in dff]
+    # groups = [group['val'] for name, group in dff]
+    columns = [name for name, group in dff if name != 'Predict']
+    groups = [group['val'] for name, group in dff if name != 'Predict']
+
     #check datatime alginment: all([all(groups[i].index==groups[0].index) for i in range(1,len(groups))])
     result = pd.concat(groups,axis=1)
     result.columns = columns

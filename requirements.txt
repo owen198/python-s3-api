@@ -3,3 +3,4 @@ pandas==0.22.0
 boto==2.48.0
 influxdb==5.2.0
 requests==2.21.0
+scipy
