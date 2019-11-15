@@ -56,8 +56,8 @@ def get_content():
     EQU_ID = target_obj.split('@')[0]
     FEATURE = target_obj.split('@')[1]
     TYPE = target_obj.split('@')[2]
-    SignalType = target_obj.split('@')[3]
-    SPECIFIC_TIME = target_obj.split('@')[-1]
+    SignalType = target_obj.split('@')[-1]
+    SPECIFIC_TIME = target_obj.split('@')[-2]
         
     print('EQU_ID=' + EQU_ID)
     print('Feature=' + FEATURE)
