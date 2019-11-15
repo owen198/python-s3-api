@@ -4,3 +4,11 @@ applications:
   memory: 512M
   instances: 1
   buildpack: python_buildpack_offline
+  command: python python-s3-api.py
+
+- name: s3-api-fft
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack_offline
+  command: python python-s3-api.py
+
