@@ -279,6 +279,19 @@ def query_timestamp (TYPE, feature, ChannelName, time_start):
     TS = datetime.datetime.utcfromtimestamp(dt64.tolist()/1e9) + datetime.timedelta(hours=8)
     print('TS=',TS)
     return TS
+    
+def butter_highpass(cutoff, fs, order=5):
+    from scipy import signal
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    b, a = signal.butter(order, normal_cutoff, btype='high', analog=False)
+    return b, a
+
+def butter_highpass_filter(data, cutoff, fs, order=5):
+    from scipy import signal
+    b, a = butter_highpass(cutoff, fs, order=order)
+    y = signal.filtfilt(b, a, data, method="gust")
+    return y    
 
 def get_velocity_mms_from_acceleration_g(data, TS):
     from scipy.integrate import cumtrapz
@@ -290,11 +303,14 @@ def get_velocity_mms_from_acceleration_g(data, TS):
     :returns:
         velocity - Velocity Time series (mm/s)
     '''
-    acceleration = (data - data.mean()) * 9806
-    velocity = TS * cumtrapz(acceleration, initial=0.)
+    # acceleration = (data - data.mean()) * 9806
+    # velocity = TS * cumtrapz(acceleration, initial=0.)
+    # data = butter_highpass_filter(data, cutoff=5, fs=1/TS)
+    velocity = cumtrapz(data, dx=TS, initial=0)
+    velocity = (velocity - velocity.mean()) * 9806
     print('TS=',TS)
     print('DATA=',data)
-    print('Acc=',acceleration)
+    # print('Acc=',acceleration)
     print('Vel=',velocity)
     return velocity
 
