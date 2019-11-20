@@ -306,6 +306,7 @@ def get_velocity_mms_from_acceleration_g(data, TS):
     # acceleration = (data - data.mean()) * 9806
     # velocity = TS * cumtrapz(acceleration, initial=0.)
     # data = butter_highpass_filter(data, cutoff=5, fs=1/TS)
+    data = butter_highpass_filter(data, cutoff=5, fs=1/TS, order=3)
     velocity = cumtrapz(data, dx=TS, initial=0)
     velocity = (velocity - velocity.mean()) * 9806
     print('TS=',TS)
