@@ -236,18 +236,61 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     
     
     return str(jsonarr)
-    
+
 
 def query_timestamp (TYPE, feature, ChannelName, time_start):
     
     ## InfluxDB Configuration
+    ## https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/eb5616fb4c4326a99d0ca45d2dc4d486
+    '''
+    {
+        serviceName: "influxdb",
+        serviceHost: "192.168.123.240",
+        credential: {
+            username: "e7e2f264-f480-449d-81a4-73abfa419e58",
+            database: "3243ffc7-76ab-4c5f-a248-ad1ccd68849e",
+            uri: "http://10.100.20.1:8086",
+            host: "10.100.20.1",
+            password: "t3u2I7DOsITmYfU61tNi57ThL",
+            port: 8086
+        },
+        serviceParameter: {}
+    }
+    '''
+
+    key = "eb5616fb4c4326a99d0ca45d2dc4d486"
+    url = "https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/" + key
+    # url = "https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/eb5616fb4c4326a99d0ca45d2dc4d486"
+
+    headers = {
+        'Accept': "*/*",
+        'Cache-Control': "no-cache",
+        'Host': "api-dccs.fomos.csc.com.tw"
+    }
+    response = requests.request("GET", url, headers=headers, verify=False)
+
+    Json_array = json.loads(response.text)
+
+    IDB_HOST = Json_array['credential']['host']
+    IDB_PORT = Json_array['credential']['port']
+    IDB_DBNAME = Json_array['credential']['database']
+    IDB_USER = Json_array['credential']['username']
+    IDB_PASSWORD = Json_array['credential']['password']
+
+    # print('IDB_HOST:', IDB_HOST)
+    # print('IDB_PORT:', IDB_PORT)
+    # print('IDB_DBNAME:', IDB_DBNAME)
+    # print('IDB_USER:', IDB_USER)
+    # print('IDB_PASSWORD:', IDB_PASSWORD)
+
+    ''' 
     IDB_HOST = '192.168.123.240'
     IDB_PORT = 8086
     IDB_DBNAME = '3243ffc7-76ab-4c5f-a248-ad1ccd68849e'
     IDB_USER = '9f5b4165-abce-4be7-92f6-20126ad3130b'
     IDB_PASSWORD = 'RoKZUtYYOK45cqEmhn6k1XniY'
+    '''
 
-    
     time_start = time_start.replace("/", "-")
     time_end = datetime.datetime.strptime(time_start, '%Y-%m-%d') + datetime.timedelta(days=1)
     #print('time_end', type(time_end), time_end)
