@@ -11,7 +11,10 @@ import os
 import json
 import datetime
 
-import binascii
+from nptdms import TdmsFile
+# import binascii
+from bokeh.plotting import figure, output_file, show
+from bokeh.io import output_notebook
 import struct
 
 import requests
@@ -21,7 +24,7 @@ import requests
 from flask import Flask
 from flask import request
 from flask import jsonify
-from influxdb import DataFrameClient
+# from influxdb import DataFrameClient
 
 app = Flask(__name__)
 
@@ -91,9 +94,9 @@ def get_content():
         return 'File not found'
 
     # goto bucket and get file accroding to the file name
-    s3_bin_data = os.path.join(PATH_DEST, FILE_NAME)
-    key = S3_BUCKET.get_key(s3_bin_data)
-    print('Bin file that the most closest to timestamp in Query Date='+s3_bin_data)
+    s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
+    key = S3_BUCKET.get_key(s3_tdms_data)
+    print('tdms file that the most closest to timestamp in Query Date='+s3_tdms_data)
 
     # download content for convert bin to plantext
     try:
@@ -101,15 +104,15 @@ def get_content():
     except:
         return 'File not found'
 
-    BIN_DF, BIN_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
+    tdms_DF,tdms_LENGTH = tdms(FILE_NAME, DISPLAY_POINT)
     if SignalType=='velocity':
         print('velocity change, size from:')
-        print(BIN_DF.shape)
-        BIN_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(BIN_DF.values.T,1.0/8192)).T
+        print(tdms_DF.shape)
+        tdms_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(tdms_DF.values.T,1.0/8192)).T
         print('velocity change, size to:')
-        print(BIN_DF.shape)
-        print(BIN_DF.values)
-    # insert_to_influxdb(BIN_DF)
+        print(tdms_DF.shape)
+        print(tdms_DF.values)
+    # insert_to_influxdb(tdms_DF)
 
     # calculate start-time and end-time for grafana representation
     HOUR = FILE_NAME.split('-')[3]
@@ -120,7 +123,7 @@ def get_content():
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
     TIME_START = TIME_START - datetime.timedelta(hours=8)
     TIME_START = TIME_START.timestamp() * 1000
-    TIME_DELTA = float(float(BIN_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
+    TIME_DELTA = float(float(tdms_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
     print ('Grafana x-axis TIME_START=', TIME_START)
     print('Datatime='+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -128,30 +131,30 @@ def get_content():
     os.remove(FILE_NAME)
 
     # combine response json object follow the rule of grafana simpleJSON
-    RETURN = combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH)
+    RETURN = combine_return (TIME_START, TIME_DELTA, tdms_DF,tdms_LENGTH)
     
     return RETURN
     
  
-def insert_to_influxdb(df):
-    
-    insert_df = pd.DataFrame(data=list(df[0].as_matrix()),
-                             index=pd.date_range(start='2014-11-16', 
-                                                 periods=len(df), 
-                                                 freq='H'),
-                             columns=['0'])
-    
-    client = DataFrameClient('192.168.123.240', 
-                             8086, 
-                             '9f5b4165-abce-4be7-92f6-20126ad3130b', 
-                             'RoKZUtYYOK45cqEmhn6k1XniY', 
-                             '3243ffc7-76ab-4c5f-a248-ad1ccd68849e')
-    
-    client.query("delete from s3")
-    client.write_points(insert_df, 's3', protocol='json')
-    client.close()
-    
-    return True
+# def insert_to_influxdb(df):
+#
+#     insert_df = pd.DataFrame(data=list(df[0].as_matrix()),
+#                              index=pd.date_range(start='2014-11-16',
+#                                                  periods=len(df),
+#                                                  freq='H'),
+#                              columns=['0'])
+#
+#     client = DataFrameClient('192.168.123.240',
+#                              8086,
+#                              '9f5b4165-abce-4be7-92f6-20126ad3130b',
+#                              'RoKZUtYYOK45cqEmhn6k1XniY',
+#                              '3243ffc7-76ab-4c5f-a248-ad1ccd68849e')
+#
+#     client.query("delete from s3")
+#     client.write_points(insert_df, 's3', protocol='json')
+#     client.close()
+#
+#     return True
 
 def query_file (TS, bucket, PATH_DEST):
     
@@ -183,7 +186,7 @@ def get_s3_bucket ():
     SECRET_KEY = 'U7fxYmr8idml083N8zo7JRddXiNbyCmNN'
     HOST = '192.168.123.226'
     PORT = 8080
-    BUCKET_NAME = 'FOMOS-Y5'
+    BUCKET_NAME = 'fomos-w4'
     
     # establish connection between blob storage and this client app
     s3_connection = boto.connect_s3(
@@ -216,14 +219,14 @@ def query_smb (bucket, EQU_ID):
     machine_id = smb_df[smb_df['EQU_ID']==EQU_ID]['smb_number'].values[0]
     return machine_id
 
-def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
+def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
     
     # load 'data' and 'index' in bin file, and append it into a list
     # follow data format from Grafana: https://github.com/grafana/simple-json-datasource/blob/master/README.md
-    jsonobj_mean = json.loads(BIN_DF.to_json(orient='split'))
+    jsonobj_mean = json.loads(tdms_DF.to_json(orient='split'))
 
     datapoints_array_mean = []
-    for i in range(0, BIN_LENGTH):
+    for i in range(0, tdms_LENGTH):
         datapoints_array_mean.append([jsonobj_mean['data'][i][0], TIME_START])
         TIME_START = float(TIME_START) + TIME_DELTA
 
@@ -240,27 +243,28 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
 
 def query_timestamp (TYPE, feature, ChannelName, time_start):
     
-    ## InfluxDB Configuration
-    ## https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/eb5616fb4c4326a99d0ca45d2dc4d486
-    '''
+    ## MongoDB Configuration
+'''
     {
-        serviceName: "influxdb",
-        serviceHost: "192.168.123.240",
+        serviceName: "mongodb",
+        serviceHost: "192.168.123.239",
         credential: {
-            username: "e7e2f264-f480-449d-81a4-73abfa419e58",
-            database: "3243ffc7-76ab-4c5f-a248-ad1ccd68849e",
-            uri: "http://10.100.20.1:8086",
-            host: "10.100.20.1",
-            password: "t3u2I7DOsITmYfU61tNi57ThL",
-            port: 8086
-        },
-        serviceParameter: {}
+            username: "8f28b802-3bfc-4d54-ae71-b21bb69320e2",
+            replicaSetName: "rs0",
+            database: "2eeb002d-1fcd-44a5-8370-648a43eef634",
+            uri: "mongodb://8f28b802-3bfc-4d54-ae71-b21bb69320e2:KI4j31AE5kUpv4HxgvLphtD26@10.100.10.1:27017,10.100.10.2:27017/2eeb002d-1fcd-44a5-8370-648a43eef634",
+            host: "10.100.10.1",
+            host2: "10.100.10.2",
+            host1: "10.100.10.1",
+            password: "KI4j31AE5kUpv4HxgvLphtD26",
+            port2: 27017,
+            port: 27017,
+            port1: 27017
     }
-    '''
-
-    key = "eb5616fb4c4326a99d0ca45d2dc4d486"
+'''
+    key = "da8ab85c90acca0045835b88c9c048j5"
     url = "https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/" + key
-    # url = "https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/eb5616fb4c4326a99d0ca45d2dc4d486"
+    # url = "https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/da8ab85c90acca0045835b88c9c048j5"
 
     headers = {
         'Accept': "*/*",
@@ -271,25 +275,12 @@ def query_timestamp (TYPE, feature, ChannelName, time_start):
 
     Json_array = json.loads(response.text)
 
-    IDB_HOST = Json_array['credential']['host']
-    IDB_PORT = Json_array['credential']['port']
-    IDB_DBNAME = Json_array['credential']['database']
-    IDB_USER = Json_array['credential']['username']
-    IDB_PASSWORD = Json_array['credential']['password']
-
-    # print('IDB_HOST:', IDB_HOST)
-    # print('IDB_PORT:', IDB_PORT)
-    # print('IDB_DBNAME:', IDB_DBNAME)
-    # print('IDB_USER:', IDB_USER)
-    # print('IDB_PASSWORD:', IDB_PASSWORD)
-
-    ''' 
-    IDB_HOST = '192.168.123.240'
-    IDB_PORT = 8086
-    IDB_DBNAME = '3243ffc7-76ab-4c5f-a248-ad1ccd68849e'
-    IDB_USER = '9f5b4165-abce-4be7-92f6-20126ad3130b'
-    IDB_PASSWORD = 'RoKZUtYYOK45cqEmhn6k1XniY'
-    '''
+    mgdb_host = Json_array['credential']['host']
+    mgdb_port = Json_array['credential']['port']
+    mgdb_database = Json_array['credential']['database']
+    mgdb_username = Json_array['credential']['username']
+    mgdb_password = Json_array['credential']['password']
+    mgdb_collection = 'w4_features'
 
     time_start = time_start.replace("/", "-")
     time_end = datetime.datetime.strptime(time_start, '%Y-%m-%d') + datetime.timedelta(days=1)
@@ -297,16 +288,17 @@ def query_timestamp (TYPE, feature, ChannelName, time_start):
     time_end = time_end.strftime("%Y-%m-%d")
     #print('time_end', type(time_end), time_end)
 
-    ## Query InfluxDB
-    measurement, data = read_influxdb_data(host = IDB_HOST,
-                                       port = IDB_PORT,
-                                       dbname = IDB_DBNAME,
-                                       ChannelName = ChannelName,
+    ## Query MongoDB
+    measurement, data = read_MongoDB_data(host = mgdb_host,
+                                      port = mgdb_port,
+                                       dbname = mgdb_database,
+                                       # ChannelName = ChannelName,
                                        time_start = time_start,
                                        time_end = time_end,
-                                       user = IDB_USER,
-                                       password = IDB_PASSWORD
+                                       user = mgdb_username,
+                                       password = mgdb_password
                                       )
+
 
     if TYPE == 'max':
         max_value = data.sort_values(by=[feature])[feature][-1]
@@ -422,42 +414,30 @@ def convert_equ_name (EQU_NAME):
 
 
 #def convert_bin (filename, pd_type, DISPLAY_POINT):
-def convert_bin (filename, DISPLAYPOINT):
-    bytes_read = open(filename, "rb").read()
-    size = [hexint(bytes_read[(i*4):((i+1)*4)]) for i in range(2)]
-    signal = [struct.unpack('f',bytes_read[(i*4):((i+1)*4)]) for i in range(2,2+size[0]*size[1])]
-    data = np.array(signal).reshape(size)
-    # print('data here')
-    print('Data=',data)
-    return_df = pd.DataFrame(data = data)
+def convert_tdms (filename, DISPLAYPOINT):
+    bytes_read = TdmsFile(filename)
+    MessageData_channel_1 = tdms_file.object('Untitled', 'STD17??頛芾撓?亥遘??bite-in')
+    MessageData_data_1 = MessageData_channel_1.data
+    return_df  = pd.DataFrame(MessageData_data_1)
     return_df = return_df.T
-    file_length = len(return_df)
 
+    file_length = len(return_df) 
     length = file_length / DISPLAYPOINT
-
-    #if pd_type == 'mean':
-    #    return_df = return_df.groupby(np.arange(len(return_df))/length).mean()
-    #elif pd_type == 'max':
-    #    return_df = return_df.groupby(np.arange(len(return_df))/length).max()
-    #else:
-    #    return_df = return_df.groupby(np.arange(len(return_df))/length).min()
-
-    #print(len(return_df))
 
     return return_df, file_length
 
 
-def hexint(b,bReverse=True): 
-    return int(binascii.hexlify(b[::-1]), 16) if bReverse else int(binascii.hexlify(b), 16)
+# def hexint(b,bReverse=True): 
+#     return int(binascii.hexlify(b[::-1]), 16) if bReverse else int(binascii.hexlify(b), 16)
 
-def read_influxdb_data(host='192.168.123.245', 
-                       port=8086, 
-                       dbname = 'c9377a95-82f3-4af3-ac14-40d14f6d2abe', 
-                       ChannelName='1Y520210100', 
+def read_MongoDB_data(host = mgdb_host,
+                       port=mgdb_port,
+                       dbname = mgdb_database,
+                       # ChannelName='1Y520210100',
                        time_start='', 
                        time_end='', 
-                       user = 'a1555b8e-6148-4ef0-af5b-c2195ac4ecd7', 
-                       password = 'ENbC4hwn1OedsIH6yvO8X4EqJ',
+                       user = mgdb_username,
+                       password = mgdb_password,
                        keyword=''):
     
     #Example: read_influxdb_data(ChannelName='1Y520210200')
