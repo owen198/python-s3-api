@@ -19,6 +19,8 @@ import struct
 
 import requests
 
+from pymongo import MongoClient
+
 # import scipy
 
 from flask import Flask
@@ -430,19 +432,19 @@ def convert_tdms (filename, DISPLAYPOINT):
 # def hexint(b,bReverse=True): 
 #     return int(binascii.hexlify(b[::-1]), 16) if bReverse else int(binascii.hexlify(b), 16)
 
-def read_MongoDB_data(host = mgdb_host,
-                       port=mgdb_port,
-                       dbname = mgdb_database,
+def read_MongoDB_data(host = '192.168.123.240',
+                       port=8086,
+                       dbname = '3243ffc7-76ab-4c5f-a248-ad1ccd68849e',
                        # ChannelName='1Y520210100',
                        time_start='', 
                        time_end='', 
-                       user = mgdb_username,
-                       password = mgdb_password,
+                       user = 'e7e2f264-f480-449d-81a4-73abfa419e58',
+                       password = 't3u2I7DOsITmYfU61tNi57ThL',
                        keyword=''):
     
     #Example: read_influxdb_data(ChannelName='1Y520210200')
     #Example: read_influxdb_data(ChannelName='1Y520210200',time_start='2018-05-28',time_end='2018-05-29')
-    client = DataFrameClient(host, port, user, password, dbname)
+    client = MongoClient(host, port, user, password, dbname)
     measurements = client.get_list_measurements()
     
     if keyword is None: keyword = ''
