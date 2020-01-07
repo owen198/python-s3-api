@@ -246,24 +246,7 @@ def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
 def query_timestamp (TYPE, feature, ChannelName, time_start):
     
     ## MongoDB Configuration
-'''
-    {
-        serviceName: "mongodb",
-        serviceHost: "192.168.123.239",
-        credential: {
-            username: "8f28b802-3bfc-4d54-ae71-b21bb69320e2",
-            replicaSetName: "rs0",
-            database: "2eeb002d-1fcd-44a5-8370-648a43eef634",
-            uri: "mongodb://8f28b802-3bfc-4d54-ae71-b21bb69320e2:KI4j31AE5kUpv4HxgvLphtD26@10.100.10.1:27017,10.100.10.2:27017/2eeb002d-1fcd-44a5-8370-648a43eef634",
-            host: "10.100.10.1",
-            host2: "10.100.10.2",
-            host1: "10.100.10.1",
-            password: "KI4j31AE5kUpv4HxgvLphtD26",
-            port2: 27017,
-            port: 27017,
-            port1: 27017
-    }
-'''
+
     key = "da8ab85c90acca0045835b88c9c048j5"
     url = "https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/" + key
     # url = "https://api-dccs.fomos.csc.com.tw/v1/serviceCredentials/da8ab85c90acca0045835b88c9c048j5"
@@ -332,14 +315,7 @@ def butter_highpass_filter(data, cutoff, fs, order=5):
 
 def get_velocity_mms_from_acceleration_g(data, TS):
     from scipy.integrate import cumtrapz
-    '''
-    Returns the velocity time series using simple integration.
-    
-    :param time_step: float: Time-series time-step (s)
-    :param acceleration: numpy.ndarray: the acceleration
-    :returns:
-        velocity - Velocity Time series (mm/s)
-    '''
+
     # acceleration = (data - data.mean()) * 9806
     # velocity = TS * cumtrapz(acceleration, initial=0.)
     # data = butter_highpass_filter(data, cutoff=5, fs=1/TS)

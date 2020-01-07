@@ -1,6 +1,30 @@
 ---
 applications:
-- name: s3-api-tdms
+- name: tdms-api-fft
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack_offline
+  command: python python-s3-api.py
+
+- name: tdms-api-wavelet
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack_offline
+  command: python python-s3-api.py
+
+- name: tdms-api-envelop
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack_offline
+  command: python python-s3-api.py
+
+- name: tdms-s3-api
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack_offline
+  command: python python-s3-api.py
+
+- name: tdms-api-ceps
   memory: 512M
   instances: 1
   buildpack: python_buildpack_offline
