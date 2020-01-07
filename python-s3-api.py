@@ -13,8 +13,8 @@ import datetime
 
 from nptdms import TdmsFile
 # import binascii
-from bokeh.plotting import figure, output_file, show
-from bokeh.io import output_notebook
+#from bokeh.plotting import figure, output_file, show
+#from bokeh.io import output_notebook
 import struct
 
 import requests
