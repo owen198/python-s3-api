@@ -418,7 +418,7 @@ def convert_equ_name (EQU_NAME):
 #def convert_bin (filename, pd_type, DISPLAY_POINT):
 def convert_tdms (filename, DISPLAYPOINT):
     bytes_read = TdmsFile(filename)
-    MessageData_channel_1 = tdms_file.object('Untitled', 'STD17??頛芾撓?亥遘??bite-in')
+    MessageData_channel_1 = tdms_file.object('Untitled', 'STD17斜齒輪輸入軸承-bite-in')
     MessageData_data_1 = MessageData_channel_1.data
     return_df  = pd.DataFrame(MessageData_data_1)
     return_df = return_df.T
