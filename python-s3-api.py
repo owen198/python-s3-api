@@ -13,8 +13,7 @@ import datetime
 
 from nptdms import TdmsFile
 # import binascii
-#from bokeh.plotting import figure, output_file, show
-#from bokeh.io import output_notebook
+
 import struct
 
 import requests
@@ -44,13 +43,13 @@ def test_1():
 
 #@app.route('/blob/api/v1.0/get_content', methods=['POST'])
 @app.route('/query', methods=['POST'])
-def get_content():
+def get_content(jsonobj={}):
     
     SAMPLE_RATE = 8192
     DISPLAY_POINT = 65536
     
     # retrieve post JSON object
-    jsonobj = request.get_json(silent=True)
+#     jsonobj = request.get_json(silent=True)
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
@@ -136,27 +135,6 @@ def get_content():
     RETURN = combine_return (TIME_START, TIME_DELTA, tdms_DF,tdms_LENGTH)
     
     return RETURN
-    
- 
-# def insert_to_influxdb(df):
-#
-#     insert_df = pd.DataFrame(data=list(df[0].as_matrix()),
-#                              index=pd.date_range(start='2014-11-16',
-#                                                  periods=len(df),
-#                                                  freq='H'),
-#                              columns=['0'])
-#
-#     client = DataFrameClient('192.168.123.240',
-#                              8086,
-#                              '9f5b4165-abce-4be7-92f6-20126ad3130b',
-#                              'RoKZUtYYOK45cqEmhn6k1XniY',
-#                              '3243ffc7-76ab-4c5f-a248-ad1ccd68849e')
-#
-#     client.query("delete from s3")
-#     client.write_points(insert_df, 's3', protocol='json')
-#     client.close()
-#
-#     return True
 
 def query_file (TS, bucket, PATH_DEST):
     
@@ -242,7 +220,6 @@ def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
     
     return str(jsonarr)
 
-
 def query_timestamp (TYPE, feature, ChannelName, time_start):
     
     ## MongoDB Configuration
@@ -299,6 +276,7 @@ def query_timestamp (TYPE, feature, ChannelName, time_start):
     TS = datetime.datetime.utcfromtimestamp(dt64.tolist()/1e9) + datetime.timedelta(hours=8)
     print('TS=',TS)
     return TS
+    
     
 def butter_highpass(cutoff, fs, order=5):
     from scipy import signal
@@ -390,11 +368,10 @@ def convert_equ_name (EQU_NAME):
 
     return EQU_ID
 
-
 #def convert_bin (filename, pd_type, DISPLAY_POINT):
 def convert_tdms (filename, DISPLAYPOINT):
     bytes_read = TdmsFile(filename)
-    MessageData_channel_1 = tdms_file.object('Untitled', 'STD17斜齒輪輸入軸承-bite-in')
+    MessageData_channel_1 = bytes_read.object('Untitled', 'STD17斜齒輪輸入軸承-bite-in')
     MessageData_data_1 = MessageData_channel_1.data
     return_df  = pd.DataFrame(MessageData_data_1)
     return_df = return_df.T
@@ -408,33 +385,38 @@ def convert_tdms (filename, DISPLAYPOINT):
 # def hexint(b,bReverse=True): 
 #     return int(binascii.hexlify(b[::-1]), 16) if bReverse else int(binascii.hexlify(b), 16)
 
-def read_MongoDB_data(host = '192.168.123.240',
-                       port=8086,
-                       dbname = '3243ffc7-76ab-4c5f-a248-ad1ccd68849e',
+def read_MongoDB_data(host = '10.100.10.1',
+                       port = '27017',
+                       dbname = '2eeb002d-1fcd-44a5-8370-648a43eef634',
                        # ChannelName='1Y520210100',
                        time_start='', 
                        time_end='', 
-                       user = 'e7e2f264-f480-449d-81a4-73abfa419e58',
-                       password = 't3u2I7DOsITmYfU61tNi57ThL',
+                       user = '8f28b802-3bfc-4d54-ae71-b21bb69320e2',
+                       password = 'KI4j31AE5kUpv4HxgvLphtD26',
+                       mgdb_collection = 'w4_features',
                        keyword=''):
     
     #Example: read_influxdb_data(ChannelName='1Y520210200')
     #Example: read_influxdb_data(ChannelName='1Y520210200',time_start='2018-05-28',time_end='2018-05-29')
-    client = MongoClient(host, port, user, password, dbname)
-    measurements = client.get_list_measurements()
+
+    client = MongoClient('mongodb://%s:%s@%s/%s' % (user, password, host, dbname))
+
+    db = client[dbname]
+    collection = db[mgdb_collection]
+    measurement = db.list_collection_names()
     
-    if keyword is None: keyword = ''
+#     if keyword is None: keyword = ''
         
-    if keyword=='':
-        measurement = [mea.get(u'name') for mea in measurements if mea.get(u'name').find(ChannelName)>=0]
-    else:
-        measurement = [mea.get(u'name') for mea in measurements if mea.get(u'name').find(ChannelName)>=0 and mea.get(u'name').find(keyword)>=0]
+#     if keyword=='':
+#         measurement = [mea.get(u'name') for mea in measurements if mea.get(u'name').find(ChannelName)>=0]
+#     else:
+#         measurement = [mea.get(u'name') for mea in measurements if mea.get(u'name').find(ChannelName)>=0 and mea.get(u'name').find(keyword)>=0]
     
     if len(measurement)==0: 
         print('No data retrieved.')
         return None
     
-    measurement = measurement[-1]
+#     measurement = measurement[-1]
     
     time_start = 'now()' if time_start=='' else "'" + time_start + ' 16:00:00' + "'"
     #print(time_start)
@@ -446,19 +428,22 @@ def read_MongoDB_data(host = '192.168.123.240',
     querystr = 'select * from "{}" where time > {} and time < {}'.format(measurement,time_start,time_end)
     print(querystr)
     
-    df = client.query(querystr).get(measurement)
+#     df = client.query(querystr).get(measurement)
+    df = collection.find({'$and': [{time_start },
+                                   {time_end }]})
     client.close()
     
     if df is None: 
         print('No data retrieved.')
         return None    
-    
-    dff = df.groupby('id')
 
-    # columns = [name for name, group in dff]
-    # groups = [group['val'] for name, group in dff]
-    columns = [name for name, group in dff if name != 'Predict']
-    groups = [group['val'] for name, group in dff if name != 'Predict']
+    df = pd.DataFrame(df)
+    dff = df.groupby('_id')
+
+    columns = [name for name, group in dff]
+    groups = [group['val'] for name, group in dff]
+#     columns = [name for name, group in dff if name != 'Predict']
+#     groups = [group['val'] for name, group in dff if name != 'Predict']
 
     #check datatime alginment: all([all(groups[i].index==groups[0].index) for i in range(1,len(groups))])
     result = pd.concat(groups,axis=1)
