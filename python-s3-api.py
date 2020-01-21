@@ -43,19 +43,20 @@ def test_1():
 
 #@app.route('/blob/api/v1.0/get_content', methods=['POST'])
 @app.route('/query', methods=['POST'])
-def get_content(jsonobj={}):
+def get_content():
     
     SAMPLE_RATE = 8192
     DISPLAY_POINT = 65536
     
-    # retrieve post JSON object
-#     jsonobj = request.get_json(silent=True)
+    retrieve post JSON object
+    jsonobj = request.get_json(silent=True)
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
     DATE = datetime.datetime.strptime(date_obj, '%Y-%m-%dT%H:%M:%S.%fZ')
     DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)
     DATE = DATE.strftime('%Y-%m-%d')
+
 
     EQU_ID = target_obj.split('@')[0]
     FEATURE = target_obj.split('@')[1]
@@ -79,33 +80,41 @@ def get_content(jsonobj={}):
         print('Feature assorcated timestamp in Query Date=', TS)
     else:
         print('user specified by query')
-        TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
+        TS = query_timestamp (TYPE, FEATURE, EQU_ID,DATE)
         print('Feature assorcated timestamp in Query Date=', TS)
 
     # establish connection to s3 and search bin file that the mostest close to query date
     S3_BUCKET = get_s3_bucket()
     
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
+    
     MACHINE_ID = query_smb_byDigit (EQU_ID)
-    PATH_DEST = MACHINE_ID + '/' + EQU_ID + '/' + str(TS.year) + '/' + str(TS.month) + '/' + str(TS.day) + '/'
+    PATH_DEST = MACHINE_ID '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    print("PATH_DEST:",PATH_DEST)
     FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST)
+    print("FILE_NAME:",FILE_NAME)
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
     if FILE_NAME is 'null':
+        print("file not found")
         return 'File not found'
 
     # goto bucket and get file accroding to the file name
     s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
-    key = S3_BUCKET.get_key(s3_tdms_data)
+    print("s3_tdms_data: ",s3_tdms_data)
+    key = S3_BUCKET.get_key(key_name=s3_tdms_data)
+    print('key: ', key)
     print('tdms file that the most closest to timestamp in Query Date='+s3_tdms_data)
 
+    
     # download content for convert bin to plantext
     try:
         key.get_contents_to_filename(FILE_NAME)
     except:
+        print('File not found')
         return 'File not found'
 
-    tdms_DF,tdms_LENGTH = tdms(FILE_NAME, DISPLAY_POINT)
+    tdms_DF,tdms_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
     if SignalType=='velocity':
         print('velocity change, size from:')
         print(tdms_DF.shape)
@@ -116,9 +125,9 @@ def get_content(jsonobj={}):
     # insert_to_influxdb(tdms_DF)
 
     # calculate start-time and end-time for grafana representation
-    HOUR = FILE_NAME.split('-')[3]
-    MIN = FILE_NAME.split('-')[4]
-    SECOND = FILE_NAME.split('-')[5].split('_')[0]
+    HOUR = FILE_NAME.decode().split('-')[3]
+    MIN = FILE_NAME.decode().split('-')[4]
+    SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
     
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
@@ -133,7 +142,7 @@ def get_content(jsonobj={}):
 
     # combine response json object follow the rule of grafana simpleJSON
     RETURN = combine_return (TIME_START, TIME_DELTA, tdms_DF,tdms_LENGTH)
-    
+
     return RETURN
 
 def query_file (TS, bucket, PATH_DEST):
@@ -178,13 +187,56 @@ def get_s3_bucket ():
                    calling_format = boto.s3.connection.OrdinaryCallingFormat(),
                  )
     bucket = s3_connection.get_bucket(BUCKET_NAME, validate=False)
-    
+
     return bucket
 
 def query_smb_byDigit (EQU_ID):
+    S3_BUCKET = get_s3_bucket()
+    key = S3_BUCKET.get_key(key_name='/tag_list.csv')
+    tag_list = key.get_contents_to_filename(tag_list.csv,encoding='big5')
+    df = pd.dataframe (tag_list)
+
+    df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
     
-    machine_id = 'smartbox' + EQU_ID[5] + EQU_ID[6] + ' Signal Data'
+    df['line'] = 0
+    for idx, row in df.iterrows():  
+        Station = row['Station']
+        if Station == '505':
+            line = ("條二")
+        elif Station == '506':
+            line = ("條二")
+
+        elif Station == '307':
+            line = ("線一")        
+        elif Station == '308':
+            line = ("線一")        
+        elif Station == '310':
+            line = ("線一")
+        elif Station == '314':
+            line = ("線一")        
+        elif Station == '315':
+            line = ("線一")    
+
+        elif Station == '1FM':
+            line = ("線二")        
+        elif Station == '1RSM':
+            line = ("線二")        
+        elif Station == '2FM':
+            line = ("線二")        
+        elif Station == '2RSM':
+            line = ("線二")                        
+        else:
+            line = 1
+        df.loc[idx, 'line'] = line
     
+    df1 = df.loc[ df['ID Number'] == equ_ID ]
+    Channel_Name = df1['Channel_Name']
+    Station = df1['Station']
+    line = df1['line']
+    tag_list.close
+    
+    MACHINE_ID = line + '/' + Station + '/' + Channel_Name + '/' 
+    MACHINE_ID = (MACHINE_ID).encode('utf-8').strip()
     return machine_id
 
 def query_smb (bucket, EQU_ID):
@@ -220,7 +272,7 @@ def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
     
     return str(jsonarr)
 
-def query_timestamp (TYPE, feature, ChannelName, time_start):
+def query_timestamp (TYPE, feature, ChannelName,time_start):
     
     ## MongoDB Configuration
 
@@ -245,10 +297,11 @@ def query_timestamp (TYPE, feature, ChannelName, time_start):
     mgdb_collection = 'w4_features'
 
     time_start = time_start.replace("/", "-")
+#     print("time_start",time_start)
     time_end = datetime.datetime.strptime(time_start, '%Y-%m-%d') + datetime.timedelta(days=1)
-    #print('time_end', type(time_end), time_end)
+#     print('time_end', type(time_end), time_end)
     time_end = time_end.strftime("%Y-%m-%d")
-    #print('time_end', type(time_end), time_end)
+#     print('time_end', type(time_end), time_end)
 
     ## Query MongoDB
     measurement, data = read_MongoDB_data(host = mgdb_host,
@@ -258,22 +311,23 @@ def query_timestamp (TYPE, feature, ChannelName, time_start):
                                        time_start = time_start,
                                        time_end = time_end,
                                        user = mgdb_username,
-                                       password = mgdb_password
+                                       password = mgdb_password,
+                                       DATE = time_start,
                                       )
 
 
     if TYPE == 'max':
-        max_value = data.sort_values(by=[feature])[feature][-1]
+        max_value = data.sort_values(by=[feature])[feature].iloc[-1]
     elif TYPE == 'median':
         max_value = data.sort_values(by=[feature])[feature][len(data)//2]
     else:
-        max_value = data.sort_values(by=[feature])[feature][0]
+        max_value = data.sort_values(by=[feature])[feature].iloc[0]
 
     print('value=', max_value)
     ## Retrive timestamp
     index_series = data[feature]
     dt64 = index_series[index_series == max_value].index.values[0]
-    TS = datetime.datetime.utcfromtimestamp(dt64.tolist()/1e9) + datetime.timedelta(hours=8)
+    TS = datetime.datetime.utcfromtimestamp(dt64.tolist()/1e9) 
     print('TS=',TS)
     return TS
     
@@ -371,8 +425,18 @@ def convert_equ_name (EQU_NAME):
 #def convert_bin (filename, pd_type, DISPLAY_POINT):
 def convert_tdms (filename, DISPLAYPOINT):
     bytes_read = TdmsFile(filename)
-    MessageData_channel_1 = bytes_read.object('Untitled', 'STD17斜齒輪輸入軸承-bite-in')
+    
+    tdms_groups = bytes_read.groups()
+    # print(tdms_groups)
+    tdms_groups=str(tdms_groups)
+    tdms_Variables_1 = bytes_read.group_channels(tdms_groups.split("'")[1])
+    # print(tdms_Variables_1)
+    tdms_Variables_1=str(tdms_Variables_1)
+    MessageData_channel_1 = bytes_read.object((tdms_Variables_1.split("'")[1]),tdms_Variables_1.split("'")[3])
+    # print(MessageData_channel_1)
     MessageData_data_1 = MessageData_channel_1.data
+    # MessageData_data_1 
+  
     return_df  = pd.DataFrame(MessageData_data_1)
     return_df = return_df.T
 
@@ -381,9 +445,6 @@ def convert_tdms (filename, DISPLAYPOINT):
 
     return return_df, file_length
 
-
-# def hexint(b,bReverse=True): 
-#     return int(binascii.hexlify(b[::-1]), 16) if bReverse else int(binascii.hexlify(b), 16)
 
 def read_MongoDB_data(host = '10.100.10.1',
                        port = '27017',
@@ -394,7 +455,8 @@ def read_MongoDB_data(host = '10.100.10.1',
                        user = '8f28b802-3bfc-4d54-ae71-b21bb69320e2',
                        password = 'KI4j31AE5kUpv4HxgvLphtD26',
                        mgdb_collection = 'w4_features',
-                       keyword=''):
+                       DATE=''
+                       ):
     
     #Example: read_influxdb_data(ChannelName='1Y520210200')
     #Example: read_influxdb_data(ChannelName='1Y520210200',time_start='2018-05-28',time_end='2018-05-29')
@@ -405,54 +467,31 @@ def read_MongoDB_data(host = '10.100.10.1',
     collection = db[mgdb_collection]
     measurement = db.list_collection_names()
     
-#     if keyword is None: keyword = ''
-        
-#     if keyword=='':
-#         measurement = [mea.get(u'name') for mea in measurements if mea.get(u'name').find(ChannelName)>=0]
-#     else:
-#         measurement = [mea.get(u'name') for mea in measurements if mea.get(u'name').find(ChannelName)>=0 and mea.get(u'name').find(keyword)>=0]
-    
-    if len(measurement)==0: 
-        print('No data retrieved.')
-        return None
-    
-#     measurement = measurement[-1]
-    
-    time_start = 'now()' if time_start=='' else "'" + time_start + ' 16:00:00' + "'"
-    #print(time_start)
-    
-    time_end = 'now()' if time_end=='' else "'" + time_end + ' 15:59:59' + "'"
-    #print(time_end)
-    
-    
-    querystr = 'select * from "{}" where time > {} and time < {}'.format(measurement,time_start,time_end)
-    print(querystr)
-    
-#     df = client.query(querystr).get(measurement)
-    df = collection.find({'$and': [{time_start },
-                                   {time_end }]})
-    client.close()
-    
-    if df is None: 
-        print('No data retrieved.')
-        return None    
+    client = MongoClient('mongodb://%s:%s@%s/%s' % (user, password, host, dbname))
 
-    df = pd.DataFrame(df)
-    dff = df.groupby('_id')
+    db = client[dbname]
+    collection = db[mgdb_collection]
 
-    columns = [name for name, group in dff]
-    groups = [group['val'] for name, group in dff]
-#     columns = [name for name, group in dff if name != 'Predict']
-#     groups = [group['val'] for name, group in dff if name != 'Predict']
+    measurement = db.list_collection_names()
 
-    #check datatime alginment: all([all(groups[i].index==groups[0].index) for i in range(1,len(groups))])
-    result = pd.concat(groups,axis=1)
-    result.columns = columns
-    result.index = groups[0].index
-    
-    #print('data between {} and {} are retrieved, dimension: {}x{}'.format(time_start,time_end,result.shape[0],result.shape[1]))
-    
-    return measurement, result
+    data = pd.DataFrame(list(collection.find()))
+    data.index = (pd.to_datetime(data['timestamp'], unit='s'))
+      
+    time_start =  "'"+ DATE +' 16:00:00' + "'"
+#     print("time_start",time_start)
+
+    from datetime import datetime, timedelta
+    DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
+      
+    import datetime
+    DATE = DATE + datetime.timedelta(days=1)
+    DATE=str(DATE)
+
+    time_end =  "'"+ DATE +' 15:59:59' + "'"
+#     print(time_end)
+
+    data = data.loc[time_start:time_end]    
+    return measurement, data
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
