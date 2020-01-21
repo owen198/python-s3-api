@@ -229,7 +229,7 @@ def query_smb_byDigit (EQU_ID):
             line = 1
         df.loc[idx, 'line'] = line
     
-    df1 = df.loc[ df['ID Number'] == equ_ID ]
+    df1 = df.loc[ df['ID Number'] == EQU_ID ]
     Channel_Name = df1['Channel_Name']
     Station = df1['Station']
     line = df1['line']
