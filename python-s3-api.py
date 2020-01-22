@@ -1,6 +1,3 @@
-
-# -*- coding: utf-8 -*-
-
 import boto
 import boto.s3.connection
 from boto.s3.key import Key
@@ -48,7 +45,7 @@ def get_content():
     SAMPLE_RATE = 8192
     DISPLAY_POINT = 65536
     
-    retrieve post JSON object
+    # retrieve post JSON object
     jsonobj = request.get_json(silent=True)
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
@@ -72,7 +69,7 @@ def get_content():
     
     
     # User specified a timestamp
-    SPECIFIC_TIME = SPECIFIC_TIME.split('\.')[0]
+    SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
     if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
         print('user specified time and date')
         TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
@@ -88,15 +85,14 @@ def get_content():
     
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
     
-    MACHINE_ID = query_smb_byDigit (EQU_ID)
-    PATH_DEST = MACHINE_ID '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    MACHINE_ID = query_smb_byDigit(EQU_ID)
+    PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     print("PATH_DEST:",PATH_DEST)
     FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST)
     print("FILE_NAME:",FILE_NAME)
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
     if FILE_NAME is 'null':
-        print("file not found")
         return 'File not found'
 
     # goto bucket and get file accroding to the file name
@@ -193,8 +189,8 @@ def get_s3_bucket ():
 def query_smb_byDigit (EQU_ID):
     S3_BUCKET = get_s3_bucket()
     key = S3_BUCKET.get_key(key_name='/tag_list.csv')
-    tag_list = key.get_contents_to_filename(tag_list.csv,encoding='big5')
-    df = pd.dataframe (tag_list)
+    tag_list_file = key.get_contents_to_filename(tag_list.csv,encoding='big5')
+    df = pd.dataframe (tag_list_file)
 
     df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
     
@@ -233,11 +229,11 @@ def query_smb_byDigit (EQU_ID):
     Channel_Name = df1['Channel_Name']
     Station = df1['Station']
     line = df1['line']
-    tag_list.close
+    tag_list_file.close
     
     MACHINE_ID = line + '/' + Station + '/' + Channel_Name + '/' 
     MACHINE_ID = (MACHINE_ID).encode('utf-8').strip()
-    return machine_id
+    return MACHINE_ID
 
 def query_smb (bucket, EQU_ID):
     
