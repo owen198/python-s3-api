@@ -45,7 +45,7 @@ def get_content():
     SAMPLE_RATE = 8192
     DISPLAY_POINT = 65536
     
-    # retrieve post JSON object
+    retrieve post JSON object
     jsonobj = request.get_json(silent=True)
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
@@ -88,8 +88,12 @@ def get_content():
     MACHINE_ID = query_smb_byDigit(EQU_ID)
     PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     print("PATH_DEST:",PATH_DEST)
+    PATH_DEST=PATH_DEST.encode('utf-8').strip()
+
     FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST)
     print("FILE_NAME:",FILE_NAME)
+    FILE_NAME=FILE_NAME.encode('utf-8').strip()
+    
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
     if FILE_NAME is 'null':
@@ -98,10 +102,9 @@ def get_content():
     # goto bucket and get file accroding to the file name
     s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
     print("s3_tdms_data: ",s3_tdms_data)
-    key = S3_BUCKET.get_key(key_name=s3_tdms_data)
+    key = S3_BUCKET.get_key(s3_tdms_data)
     print('key: ', key)
-    print('tdms file that the most closest to timestamp in Query Date='+s3_tdms_data)
-
+#     print('tdms file that the most closest to timestamp in Query Date=)
     
     # download content for convert bin to plantext
     try:
@@ -188,12 +191,14 @@ def get_s3_bucket ():
 
 def query_smb_byDigit (EQU_ID):
     S3_BUCKET = get_s3_bucket()
-    key = S3_BUCKET.get_key(key_name='/tag_list.csv')
-    tag_list_file = key.get_contents_to_filename(tag_list.csv,encoding='big5')
-    df = pd.dataframe (tag_list_file)
+    filename = 'tag_list.csv'
+    tag_list = os.path.join('/', filename)
+    key =S3_BUCKET.get_key(tag_list)
+    key.get_contents_to_filename(filename)
+
+    df = pd.read_csv('tag_list.csv', encoding='big5')
 
     df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
-    
     df['line'] = 0
     for idx, row in df.iterrows():  
         Station = row['Station']
@@ -222,17 +227,20 @@ def query_smb_byDigit (EQU_ID):
         elif Station == '2RSM':
             line = ("線二")                        
         else:
-            line = 1
+            line = "NaN"
         df.loc[idx, 'line'] = line
-    
+
     df1 = df.loc[ df['ID Number'] == EQU_ID ]
-    Channel_Name = df1['Channel_Name']
-    Station = df1['Station']
-    line = df1['line']
-    tag_list_file.close
+    df1 = df1.values.tolist()
+
+    Channel_Name = df1[0][0]
+    Station = df1[0][3]
+    line = df1[0][8]  
     
     MACHINE_ID = line + '/' + Station + '/' + Channel_Name + '/' 
-    MACHINE_ID = (MACHINE_ID).encode('utf-8').strip()
+    
+#     MACHINE_ID = (MACHINE_ID).encode('utf-8').strip()
+    os.remove(filename)
     return MACHINE_ID
 
 def query_smb (bucket, EQU_ID):
