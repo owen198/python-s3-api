@@ -45,7 +45,7 @@ def get_content():
     SAMPLE_RATE = 8192
     DISPLAY_POINT = 65536
     
-    retrieve post JSON object
+    # retrieve post JSON object
     jsonobj = request.get_json(silent=True)
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
