@@ -101,9 +101,9 @@ def get_content():
 
     # goto bucket and get file accroding to the file name
     s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
-    print("s3_tdms_data: ",s3_tdms_data)
+    # print("s3_tdms_data: ",s3_tdms_data)
     key = S3_BUCKET.get_key(s3_tdms_data)
-    print('key: ', key)
+    # print('key: ', key)
 #     print('tdms file that the most closest to timestamp in Query Date=)
     
     # download content for convert bin to plantext
