@@ -27,7 +27,7 @@ from flask import jsonify
 app = Flask(__name__)
 
 
-@app.route("/", methods=['GET','POST'])
+@app.route("/search", methods=['GET','POST'])
 def test_1():
     """
     for simple json.
@@ -43,15 +43,16 @@ def test_1():
 def get_content():
     
     SAMPLE_RATE = 8192
-    DISPLAY_POINT = 65536
-    
-    # retrieve post JSON object
+#     DISPLAY_POINT = 65536
+    DISPLAY_POINT = 51180    
+#     retrieve post JSON object
     jsonobj = request.get_json(silent=True)
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
     DATE = datetime.datetime.strptime(date_obj, '%Y-%m-%dT%H:%M:%S.%fZ')
-    DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)
+    DATE = DATE + datetime.timedelta(hours=8)
+#     DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)    
     DATE = DATE.strftime('%Y-%m-%d')
 
 
@@ -93,7 +94,7 @@ def get_content():
     FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST)
     print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
-    
+    print("FILE_NAME:",FILE_NAME)    
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
     if FILE_NAME is 'null':
@@ -101,9 +102,9 @@ def get_content():
 
     # goto bucket and get file accroding to the file name
     s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
-    # print("s3_tdms_data: ",s3_tdms_data)
+#     print("s3_tdms_data: ",s3_tdms_data)
     key = S3_BUCKET.get_key(s3_tdms_data)
-    # print('key: ', key)
+#     print('key: ', key)
 #     print('tdms file that the most closest to timestamp in Query Date=)
     
     # download content for convert bin to plantext
@@ -121,13 +122,15 @@ def get_content():
         print('velocity change, size to:')
         print(tdms_DF.shape)
         print(tdms_DF.values)
+        print(type(tdms_DF.values))
     # insert_to_influxdb(tdms_DF)
 
     # calculate start-time and end-time for grafana representation
     HOUR = FILE_NAME.decode().split('-')[3]
     MIN = FILE_NAME.decode().split('-')[4]
     SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
-    
+
+
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
     TIME_START = TIME_START - datetime.timedelta(hours=8)
@@ -174,12 +177,12 @@ def get_s3_bucket ():
     SECRET_KEY = 'U7fxYmr8idml083N8zo7JRddXiNbyCmNN'
     HOST = '192.168.123.226'
     PORT = 8080
-    BUCKET_NAME = 'fomos-w4'
-    
+#     BUCKET_NAME = 'fomos-w4'
+    BUCKET_NAME = 'FOMOS-W4'    
     # establish connection between blob storage and this client app
     s3_connection = boto.connect_s3(
                    aws_access_key_id = ACCESS_KEY,
-                   aws_secret_access_key = SECRET_KEY,
+                    aws_secret_access_key = SECRET_KEY,
                    host = HOST,
                    port = PORT,
                    is_secure=False,               # uncomment if you are not using ssl
@@ -262,10 +265,15 @@ def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
     jsonobj_mean = json.loads(tdms_DF.to_json(orient='split'))
 
     datapoints_array_mean = []
+       
+#     print([np.array(jsonobj_mean['data'])[0]])
+    
     for i in range(0, tdms_LENGTH):
-        datapoints_array_mean.append([jsonobj_mean['data'][i][0], TIME_START])
+        datapoints_array_mean.append([(jsonobj_mean['data'])[0][i], TIME_START])
         TIME_START = float(TIME_START) + TIME_DELTA
 
+    
+#     print(TIME_START)
     # construct json array for API response
     dict_data_mean = {}
     dict_data_mean["target"] = 'original'
@@ -360,6 +368,7 @@ def get_velocity_mms_from_acceleration_g(data, TS):
     velocity = (velocity - velocity.mean()) * 9806
     print('TS=',TS)
     print('DATA=',data)
+    print(type(data))
     # print('Acc=',acceleration)
     print('Vel=',velocity)
     return velocity
@@ -444,7 +453,7 @@ def convert_tdms (filename, DISPLAYPOINT):
     return_df  = pd.DataFrame(MessageData_data_1)
     return_df = return_df.T
 
-    file_length = len(return_df) 
+    file_length = len(return_df.columns) 
     length = file_length / DISPLAYPOINT
 
     return return_df, file_length
@@ -478,24 +487,31 @@ def read_MongoDB_data(host = '10.100.10.1',
 
     measurement = db.list_collection_names()
 
-    data = pd.DataFrame(list(collection.find()))
-    data.index = (pd.to_datetime(data['timestamp'], unit='s'))
-      
-    time_start =  "'"+ DATE +' 16:00:00' + "'"
-#     print("time_start",time_start)
-
+    import time
+#     DATE ='2019-11-01'
     from datetime import datetime, timedelta
     DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
-      
+
     import datetime
-    DATE = DATE + datetime.timedelta(days=1)
+    DATE_1 = DATE + datetime.timedelta(days=1)
+
     DATE=str(DATE)
+    DATE_1=str(DATE_1)
 
-    time_end =  "'"+ DATE +' 15:59:59' + "'"
-#     print(time_end)
+    pattern = '%Y-%m-%d'
+    epoch_DATE = int(time.mktime(time.strptime(DATE, pattern)))
+    epoch_DATE_1 = int(time.mktime(time.strptime(DATE_1, pattern)))
 
-    data = data.loc[time_start:time_end]    
+    data = pd.DataFrame(list(collection.find({"$and":[{'timestamp':{"$gte":epoch_DATE}},{"timestamp":{"$lte":epoch_DATE_1}}]})))
+    data.index = (pd.to_datetime(data['timestamp'], unit='s'))
+#     print(data)
+
     return measurement, data
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
