@@ -91,7 +91,7 @@ def get_content():
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
 
-    FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST)
+    FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST,EQU_ID)
     print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     print("FILE_NAME:",FILE_NAME)    
@@ -147,28 +147,27 @@ def get_content():
 
     return RETURN
 
-def query_file (TS, bucket, PATH_DEST):
-    
-    ts_df = pd.DataFrame(columns=['hours', 'minutes'])
-    filename_df = pd.DataFrame(columns=['filename'])
-    for key in bucket.list(prefix=PATH_DEST): 
-        
-        try:
-            ts_df = ts_df.append(pd.Series(key.name.split('-')[3:5], index=['hours', 'minutes']), ignore_index=True)
-            filename_df = filename_df.append(pd.Series(key.name.split('/')[-1], index=['filename']), ignore_index=True)
-        except: 
-            pass
+def query_file (TS, bucket, PATH_DEST,EQU_ID):
+    S3_BUCKET = get_s3_bucket()
+    filename = 'tag_list.csv'
+    tag_list = os.path.join('/', filename)
+    key =S3_BUCKET.get_key(tag_list)
+    key.get_contents_to_filename(filename)
+    df = pd.read_csv('tag_list.csv', encoding='big5')
+    df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
+    df1 = df.loc[ df['ID Number'] == EQU_ID ]
+    df1 = df1.values.tolist()
+    Channel_Name = df1[0][0]
+    #time 
+    os.remove(filename)
+    TS_H = TS.strftime('%H')
+    TS_M = TS.strftime('%M')
+    TS_S = TS.strftime('%S')
 
-    ts_df = pd.concat([ts_df, filename_df], axis=1, join_axes=[filename_df.index])
-    
-    ts_hour_df = ts_df.loc[(ts_df['hours'] == TS.strftime('%H')) ]
-    ts_df = ts_hour_df.loc[abs(ts_hour_df['minutes'].astype('int') - TS.minute)<=5 ].head(1)
-    
-    try: 
-        filename = ts_df['filename'].values[0]
-    except:
-        filename = 'null'
-    
+
+    filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+#     filename = f"Raw Data-{Channel_Name}-rolling-{TS_H}-{TS_M}-{TS_S}.tdms"
+    print("test",filename)
     return filename
 
 def get_s3_bucket ():
@@ -284,7 +283,7 @@ def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
     
     return str(jsonarr)
 
-def query_timestamp (TYPE, feature, ChannelName,time_start):
+def query_timestamp (TYPE, feature, EQU_ID,time_start):
     
     ## MongoDB Configuration
 
@@ -314,9 +313,9 @@ def query_timestamp (TYPE, feature, ChannelName,time_start):
 #     print('time_end', type(time_end), time_end)
     time_end = time_end.strftime("%Y-%m-%d")
 #     print('time_end', type(time_end), time_end)
-
     ## Query MongoDB
-    measurement, data = read_MongoDB_data(host = mgdb_host,
+    measurement, data = read_MongoDB_data(EQU_ID,
+                                        host = mgdb_host,
                                       port = mgdb_port,
                                        dbname = mgdb_database,
                                        # ChannelName = ChannelName,
@@ -325,7 +324,8 @@ def query_timestamp (TYPE, feature, ChannelName,time_start):
                                        user = mgdb_username,
                                        password = mgdb_password,
                                        DATE = time_start,
-                                      )
+                                       
+                                          )
 
 
     if TYPE == 'max':
@@ -459,7 +459,8 @@ def convert_tdms (filename, DISPLAYPOINT):
     return return_df, file_length
 
 
-def read_MongoDB_data(host = '10.100.10.1',
+def read_MongoDB_data(EQU_ID,
+                        host = '10.100.10.1',
                        port = '27017',
                        dbname = '2eeb002d-1fcd-44a5-8370-648a43eef634',
                        # ChannelName='1Y520210100',
@@ -468,17 +469,12 @@ def read_MongoDB_data(host = '10.100.10.1',
                        user = '8f28b802-3bfc-4d54-ae71-b21bb69320e2',
                        password = 'KI4j31AE5kUpv4HxgvLphtD26',
                        mgdb_collection = 'w4_features',
-                       DATE=''
+                       DATE='',
+                       
                        ):
     
     #Example: read_influxdb_data(ChannelName='1Y520210200')
     #Example: read_influxdb_data(ChannelName='1Y520210200',time_start='2018-05-28',time_end='2018-05-29')
-
-    client = MongoClient('mongodb://%s:%s@%s/%s' % (user, password, host, dbname))
-
-    db = client[dbname]
-    collection = db[mgdb_collection]
-    measurement = db.list_collection_names()
     
     client = MongoClient('mongodb://%s:%s@%s/%s' % (user, password, host, dbname))
 
@@ -491,7 +487,7 @@ def read_MongoDB_data(host = '10.100.10.1',
 #     DATE ='2019-11-01'
     from datetime import datetime, timedelta
     DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
-
+    print("DATE",DATE)
     import datetime
     DATE_1 = DATE + datetime.timedelta(days=1)
 
@@ -501,17 +497,17 @@ def read_MongoDB_data(host = '10.100.10.1',
     pattern = '%Y-%m-%d'
     epoch_DATE = int(time.mktime(time.strptime(DATE, pattern)))
     epoch_DATE_1 = int(time.mktime(time.strptime(DATE_1, pattern)))
-
-    data = pd.DataFrame(list(collection.find({"$and":[{'timestamp':{"$gte":epoch_DATE}},{"timestamp":{"$lte":epoch_DATE_1}}]})))
+    print("epoch_DATE_1",epoch_DATE_1)
+    data = pd.DataFrame(list(collection.find({
+        "$and":[
+            {'timestamp':{"$gte":epoch_DATE}},
+            {"timestamp":{"$lte":epoch_DATE_1}},
+            {'device':EQU_ID } ] })))
+    
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
-#     print(data)
+    
 
     return measurement, data
-
-
-
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
