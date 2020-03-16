@@ -158,16 +158,31 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
     df1 = df.loc[ df['ID Number'] == EQU_ID ]
     df1 = df1.values.tolist()
     Channel_Name = df1[0][0]
+    station = df1[0][3]
     #time 
     os.remove(filename)
     TS_H = TS.strftime('%H')
     TS_M = TS.strftime('%M')
     TS_S = TS.strftime('%S')
 
+    if station == '505':
+        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+    elif station == '506':
+        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+    elif station == '307':
+        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+    elif station == '308':
+        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+    elif station == '1FM':
+        filename = 'Raw Data-'+ Channel_Name + TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+    elif station == '2FM':
+        filename = 'Raw Data-'+ Channel_Name + TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+    else:
+        print("query_file error")
 
-    filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+    # filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
 #     filename = f"Raw Data-{Channel_Name}-rolling-{TS_H}-{TS_M}-{TS_S}.tdms"
-    print("test",filename)
+
     return filename
 
 def get_s3_bucket ():
