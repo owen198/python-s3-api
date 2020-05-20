@@ -126,9 +126,31 @@ def get_content():
     # insert_to_influxdb(tdms_DF)
 
     # calculate start-time and end-time for grafana representation
-    HOUR = FILE_NAME.decode().split('-')[3]
-    MIN = FILE_NAME.decode().split('-')[4]
-    SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
+    S3_BUCKET = get_s3_bucket()
+    filename = 'tag_list.csv'
+    tag_list = os.path.join('/', filename)
+    key =S3_BUCKET.get_key(tag_list)
+    key.get_contents_to_filename(filename)
+    df = pd.read_csv('tag_list.csv', encoding='big5')
+    df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
+    df1 = df.loc[ df['ID Number'] == EQU_ID ]
+    df1 = df1.values.tolist()
+    Channel_Name = df1[0][0]
+    station = df1[0][3]
+    os.remove(filename)
+    
+    if station == '1FM':
+        HOUR = FILE_NAME.decode().split('-')[2]
+        MIN = FILE_NAME.decode().split('-')[3]
+        SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
+    elif station =='2FM':
+        HOUR = FILE_NAME.decode().split('-')[2]
+        MIN = FILE_NAME.decode().split('-')[3]
+        SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
+    else:    
+        HOUR = FILE_NAME.decode().split('-')[3]
+        MIN = FILE_NAME.decode().split('-')[4]
+        SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
 
 
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
@@ -174,9 +196,9 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
     elif station == '308':
         filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
     elif station == '1FM':
-        filename = 'Raw Data-'+ Channel_Name + TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+        filename = 'Raw Data-'+ Channel_Name +'-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
     elif station == '2FM':
-        filename = 'Raw Data-'+ Channel_Name + TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
+        filename = 'Raw Data-'+ Channel_Name +'-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
     else:
         print("query_file error")
 
