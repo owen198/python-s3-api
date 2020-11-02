@@ -77,6 +77,7 @@ def get_content():
         TS = TS + datetime.timedelta(hours=8)
         print('Feature assorcated timestamp in Query Date=', TS)
     else:
+        #TODO: ask Dr. Ho see if we still need this
         print('user specified by query')
         TS = query_timestamp (TYPE, FEATURE, EQU_ID,DATE)
         print('Feature assorcated timestamp in Query Date=', TS)
@@ -87,6 +88,7 @@ def get_content():
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
     
     MACHINE_ID = query_smb_byDigit(EQU_ID)
+    #TODO: fix the S3 prefix
     PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
@@ -114,6 +116,7 @@ def get_content():
         print('File not found')
         return 'File not found'
 
+    # TODO: replace as convert_bins
     tdms_DF,tdms_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
     if SignalType=='velocity':
         print('velocity change, size from:')
@@ -127,6 +130,8 @@ def get_content():
 
     # calculate start-time and end-time for grafana representation
     S3_BUCKET = get_s3_bucket()
+
+    #TODO: reconsider if we can remove this
     filename = 'tag_list.csv'
     tag_list = os.path.join('/', filename)
     key =S3_BUCKET.get_key(tag_list)
@@ -139,6 +144,7 @@ def get_content():
     station = df1[0][3]
     os.remove(filename)
     
+    #TODO: reconsider if we can remove this
     if station == '1FM':
         HOUR = FILE_NAME.decode().split('-')[2]
         MIN = FILE_NAME.decode().split('-')[3]
@@ -209,12 +215,12 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
 
 def get_s3_bucket ():
     # load value of key for access blob container (bucket)
-    ACCESS_KEY = 'cc0b4b06affd4f599dff7607f1556811'
-    SECRET_KEY = 'U7fxYmr8idml083N8zo7JRddXiNbyCmNN'
-    HOST = '192.168.123.226'
-    PORT = 8080
+    ACCESS_KEY = 't7user1'
+    SECRET_KEY = 'Bhw0MdOHfFL9h03u3epl4AoLxl/sOu0UvELUBL1h'
+    HOST = 'object.csc.com.tw'
+    PORT = 9020
 #     BUCKET_NAME = 'fomos-w4'
-    BUCKET_NAME = 'FOMOS-W4'    
+    BUCKET_NAME = 'Y4_HSM'    
     # establish connection between blob storage and this client app
     s3_connection = boto.connect_s3(
                    aws_access_key_id = ACCESS_KEY,
@@ -229,6 +235,8 @@ def get_s3_bucket ():
     return bucket
 
 def query_smb_byDigit (EQU_ID):
+
+    # TODO: remove this function due to no equ concept in vPodPro
     S3_BUCKET = get_s3_bucket()
     filename = 'tag_list.csv'
     tag_list = os.path.join('/', filename)
