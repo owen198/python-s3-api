@@ -189,7 +189,7 @@ def get_content():
     os.remove(FILE_NAME)
 
     # combine response json object follow the rule of grafana simpleJSON
-    RETURN = combine_return (TIME_START, TIME_DELTA, tdms_DF,tdms_LENGTH)
+    RETURN = combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH)
 
     return RETURN
 
@@ -292,22 +292,17 @@ def get_s3_bucket ():
     
 
 
-def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
+def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     
     # load 'data' and 'index' in bin file, and append it into a list
     # follow data format from Grafana: https://github.com/grafana/simple-json-datasource/blob/master/README.md
-    jsonobj_mean = json.loads(tdms_DF.to_json(orient='split'))
+    jsonobj_mean = json.loads(BIN_DF.to_json(orient='split'))
 
     datapoints_array_mean = []
-       
-#     print([np.array(jsonobj_mean['data'])[0]])
-    
-    for i in range(0, tdms_LENGTH):
-        datapoints_array_mean.append([(jsonobj_mean['data'])[0][i], TIME_START])
+    for i in range(0, BIN_LENGTH):
+        datapoints_array_mean.append([jsonobj_mean['data'][i][0], TIME_START])
         TIME_START = float(TIME_START) + TIME_DELTA
 
-    
-#     print(TIME_START)
     # construct json array for API response
     dict_data_mean = {}
     dict_data_mean["target"] = 'original'
