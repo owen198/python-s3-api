@@ -9,7 +9,7 @@ import json
 import datetime
 
 from nptdms import TdmsFile
-# import binascii
+import binascii
 
 import struct
 
@@ -94,6 +94,11 @@ def get_content():
 
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
+
+    print ('hour=', str(TS.strftime("%H")))
+    print ('hour=', str(TS.strftime("%h")))
+    print ('minutes=', str(TS.strftime("%M")))
+    print ('Raw Data-' + DEVICE_NAME + '_vpod-' + str(TS.strftime("%H")) + '_25600.bin')
 
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
