@@ -101,8 +101,8 @@ def get_content():
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
     print("FILE_NAME:",FILE_NAME)
-    #FILE_NAME=FILE_NAME.encode('utf-8').strip()
-    #print("FILE_NAME:",FILE_NAME)    
+    FILE_NAME=FILE_NAME.encode('utf-8').strip()
+    print("FILE_NAME:",FILE_NAME)    
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
     if FILE_NAME is 'null':
@@ -133,6 +133,15 @@ def get_content():
         print(tdms_DF.values)
         print(type(tdms_DF.values))
     # insert_to_influxdb(tdms_DF)
+
+    BIN_DF, BIN_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
+    if SignalType=='velocity':
+        print('velocity change, size from:')
+        print(BIN_DF.shape)
+        BIN_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(BIN_DF.values.T,1.0/8192)).T
+        print('velocity change, size to:')
+        print(BIN_DF.shape)
+        print(BIN_DF.values)
 
     # calculate start-time and end-time for grafana representation
     S3_BUCKET = get_s3_bucket()
@@ -180,6 +189,21 @@ def get_content():
     RETURN = combine_return (TIME_START, TIME_DELTA, tdms_DF,tdms_LENGTH)
 
     return RETURN
+
+
+def convert_bin (filename, DISPLAYPOINT):
+    bytes_read = open(filename, "rb").read()
+    size = [hexint(bytes_read[(i*4):((i+1)*4)]) for i in range(2)]
+    signal = [struct.unpack('f',bytes_read[(i*4):((i+1)*4)]) for i in range(2,2+size[0]*size[1])]
+    data = np.array(signal).reshape(size)
+
+    return_df = pd.DataFrame(data = data)
+    return_df = return_df.T
+    file_length = len(return_df)
+
+    length = file_length / DISPLAYPOINT
+
+    return return_df, file_length
 
 def query_device_name (EQU_ID):
     PG_IP = "192.168.123.238"
