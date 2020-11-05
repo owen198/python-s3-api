@@ -3,30 +3,25 @@ import boto.s3.connection
 from boto.s3.key import Key
 
 import pandas as pd
+import pandas.io.sql as sqlio
+
 import numpy as np
 import os
 import json
 import datetime
-
-from nptdms import TdmsFile
 import binascii
-
 import struct
-
 import requests
-
-from pymongo import MongoClient
 import psycopg2
-import pandas.io.sql as sqlio
-# import scipy
 
 from flask import Flask
 from flask import request
 from flask import jsonify
+from nptdms import TdmsFile
+from pymongo import MongoClient
 # from influxdb import DataFrameClient
 
 app = Flask(__name__)
-
 
 @app.route("/", methods=['GET','POST'])
 def test_1():
@@ -38,24 +33,22 @@ def test_1():
 
     return jsonify({'msg': str_msg}), 200
 
-
 #@app.route('/blob/api/v1.0/get_content', methods=['POST'])
 @app.route('/query', methods=['POST'])
 def get_content():
     
     SAMPLE_RATE = 8192
-#     DISPLAY_POINT = 65536
-    DISPLAY_POINT = 51180    
-#     retrieve post JSON object
+    DISPLAY_POINT = 65536   
+
+    # retrieve post JSON object
     jsonobj = request.get_json(silent=True)
     print(jsonobj)
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
     DATE = datetime.datetime.strptime(date_obj, '%Y-%m-%dT%H:%M:%S.%fZ')
     DATE = DATE + datetime.timedelta(hours=8)
-#     DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)    
+    # DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)    
     DATE = DATE.strftime('%Y-%m-%d')
-
 
     EQU_ID = target_obj.split('@')[0]
     FEATURE = target_obj.split('@')[1]
@@ -126,17 +119,6 @@ def get_content():
         return 'File not found'
 
 
-    #tdms_DF,tdms_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
-    #if SignalType=='velocity':
-    #    print('velocity change, size from:')
-    #    print(tdms_DF.shape)
-    #    tdms_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(tdms_DF.values.T,1.0/8192)).T
-    #    print('velocity change, size to:')
-    #    print(tdms_DF.shape)
-    #    print(tdms_DF.values)
-    #    print(type(tdms_DF.values))
-    # insert_to_influxdb(tdms_DF)
-
     BIN_DF, BIN_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
     if SignalType=='velocity':
         print('velocity change, size from:')
@@ -149,39 +131,12 @@ def get_content():
     # calculate start-time and end-time for grafana representation
     S3_BUCKET = get_s3_bucket()
 
-    #TODO: reconsider if we can remove this
-    #filename = 'tag_list.csv'
-    #tag_list = os.path.join('/', filename)
-    #key =S3_BUCKET.get_key(tag_list)
-    #key.get_contents_to_filename(filename)
-    #df = pd.read_csv('tag_list.csv', encoding='big5')
-    #df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
-    #df1 = df.loc[ df['ID Number'] == EQU_ID ]
-    #df1 = df1.values.tolist()
-    #Channel_Name = df1[0][0]
-    #station = df1[0][3]
-    #os.remove(filename)
-    
-    #TODO: reconsider if we can remove this
-    #if station == '1FM':
-    #    HOUR = FILE_NAME.decode().split('-')[2]
-    #    MIN = FILE_NAME.decode().split('-')[3]
-    #    SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
-    #elif station =='2FM':
-    #HOUR = FILE_NAME.decode().split('-')[2]
-    #MIN = FILE_NAME.decode().split('-')[3]
-    #SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
-    #else:    
-    #    HOUR = FILE_NAME.decode().split('-')[3]
-    #    MIN = FILE_NAME.decode().split('-')[4]
-    #    SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
-
 
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
     TIME_START = TIME_START - datetime.timedelta(hours=8)
     TIME_START = TIME_START.timestamp() * 1000
-    TIME_DELTA = float(float(tdms_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
+    TIME_DELTA = float(float(BIN_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
     print ('Grafana x-axis TIME_START=', TIME_START)
     print('Datatime='+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
