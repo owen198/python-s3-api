@@ -89,9 +89,6 @@ def get_content():
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
     
     DEVICE_NAME = query_device_name (EQU_ID)
-    #MACHINE_ID = query_smb_byDigit (EQU_ID)
-    #TODO: fix the S3 prefix
-    #PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
     PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
 
@@ -122,16 +119,16 @@ def get_content():
         print('File not found')
         return 'File not found'
 
-    # TODO: replace as convert_bins
-    tdms_DF,tdms_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
-    if SignalType=='velocity':
-        print('velocity change, size from:')
-        print(tdms_DF.shape)
-        tdms_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(tdms_DF.values.T,1.0/8192)).T
-        print('velocity change, size to:')
-        print(tdms_DF.shape)
-        print(tdms_DF.values)
-        print(type(tdms_DF.values))
+
+    #tdms_DF,tdms_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
+    #if SignalType=='velocity':
+    #    print('velocity change, size from:')
+    #    print(tdms_DF.shape)
+    #    tdms_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(tdms_DF.values.T,1.0/8192)).T
+    #    print('velocity change, size to:')
+    #    print(tdms_DF.shape)
+    #    print(tdms_DF.values)
+    #    print(type(tdms_DF.values))
     # insert_to_influxdb(tdms_DF)
 
     BIN_DF, BIN_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
@@ -147,31 +144,31 @@ def get_content():
     S3_BUCKET = get_s3_bucket()
 
     #TODO: reconsider if we can remove this
-    filename = 'tag_list.csv'
-    tag_list = os.path.join('/', filename)
-    key =S3_BUCKET.get_key(tag_list)
-    key.get_contents_to_filename(filename)
-    df = pd.read_csv('tag_list.csv', encoding='big5')
-    df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
-    df1 = df.loc[ df['ID Number'] == EQU_ID ]
-    df1 = df1.values.tolist()
-    Channel_Name = df1[0][0]
-    station = df1[0][3]
-    os.remove(filename)
+    #filename = 'tag_list.csv'
+    #tag_list = os.path.join('/', filename)
+    #key =S3_BUCKET.get_key(tag_list)
+    #key.get_contents_to_filename(filename)
+    #df = pd.read_csv('tag_list.csv', encoding='big5')
+    #df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
+    #df1 = df.loc[ df['ID Number'] == EQU_ID ]
+    #df1 = df1.values.tolist()
+    #Channel_Name = df1[0][0]
+    #station = df1[0][3]
+    #os.remove(filename)
     
     #TODO: reconsider if we can remove this
-    if station == '1FM':
-        HOUR = FILE_NAME.decode().split('-')[2]
-        MIN = FILE_NAME.decode().split('-')[3]
-        SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
-    elif station =='2FM':
-        HOUR = FILE_NAME.decode().split('-')[2]
-        MIN = FILE_NAME.decode().split('-')[3]
-        SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
-    else:    
-        HOUR = FILE_NAME.decode().split('-')[3]
-        MIN = FILE_NAME.decode().split('-')[4]
-        SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
+    #if station == '1FM':
+    #    HOUR = FILE_NAME.decode().split('-')[2]
+    #    MIN = FILE_NAME.decode().split('-')[3]
+    #    SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
+    #elif station =='2FM':
+    HOUR = FILE_NAME.decode().split('-')[2]
+    MIN = FILE_NAME.decode().split('-')[3]
+    SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
+    #else:    
+    #    HOUR = FILE_NAME.decode().split('-')[3]
+    #    MIN = FILE_NAME.decode().split('-')[4]
+    #    SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
 
 
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
