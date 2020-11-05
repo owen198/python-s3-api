@@ -93,8 +93,7 @@ def get_content():
     #TODO: fix the S3 prefix
     #PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
-    DEVICE_NAME = '#1內冷式ROT Roller WS_vpod'
-    PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
 
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
@@ -102,8 +101,8 @@ def get_content():
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
     print("FILE_NAME:",FILE_NAME)
-    FILE_NAME=FILE_NAME.encode('utf-8').strip()
-    print("FILE_NAME:",FILE_NAME)    
+    #FILE_NAME=FILE_NAME.encode('utf-8').strip()
+    #print("FILE_NAME:",FILE_NAME)    
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
     if FILE_NAME is 'null':
