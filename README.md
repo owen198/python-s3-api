@@ -1,5 +1,4 @@
-$GETchannelID@Acceleration RMS band 0@$currentTime@$Para
-1Y520210100@Acceleration RMS band 0@1604566653000@Velocity
+
 
 ### Request
 
@@ -24,6 +23,11 @@ Post Body
 |date      | date, ex. 2018/6/10, 2018/10/6                                              |
 
 Example
+
+$GETchannelID@Acceleration RMS band 0@$currentTime@$Para
+
+1Y520210100@Acceleration RMS band 0@1604566653000@Velocity
+
 `{
     "timezone": "browser",
     "panelId": 2,

@@ -88,7 +88,8 @@ def get_content():
     
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
     
-    MACHINE_ID = query_smb_byDigit (EQU_ID)
+    DEVICE_NAME = query_device_name (EQU_ID)
+    #MACHINE_ID = query_smb_byDigit (EQU_ID)
     #TODO: fix the S3 prefix
     #PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
@@ -180,6 +181,26 @@ def get_content():
     RETURN = combine_return (TIME_START, TIME_DELTA, tdms_DF,tdms_LENGTH)
 
     return RETURN
+
+def query_device_name (EQU_ID):
+    PG_IP = "192.168.123.238"
+    PG_USER = "6e6b8fc2-ea3d-412e-9806-692a4aea5c0e"
+    PG_PASS = "huu1enrd9rrsptr86kvapqk4pe"
+    PG_DB = "214c2b8f-c62b-4133-82a8-93eb2dc59277"
+
+    conn = psycopg2.connect(
+                            host = PG_IP,
+                            database = PG_DB,
+                            user = PG_USER,
+                            password = PG_PASS)
+
+    sql = r'SELECT * FROM "CSC_FOMOS"."Y4_Channel_List";'
+    tag_list_pd = sqlio.read_sql_query(sql, conn)
+    conn.close()
+
+    device_name = tag_list_pd[tag_list_pd['channelID'] == EQU_ID]['channel_name'].values[0]
+
+    return device_name
 
 def query_file (TS, bucket, PATH_DEST,EQU_ID):
     S3_BUCKET = get_s3_bucket()
