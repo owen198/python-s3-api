@@ -68,18 +68,18 @@ def get_content():
     print('SignalType=' + SignalType)
     print('Query Date=' + DATE)
     
-    
+    # Dr. Ho: we use specified time instead of search range
     # User specified a timestamp
     SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
     #if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
     #    print('user specified time and date')
-    #    TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
-    #    TS = TS + datetime.timedelta(hours=8)
+    TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
+    TS = TS + datetime.timedelta(hours=8)
     #    print('Feature assorcated timestamp in Query Date=', TS)
     #else:
         #Dr. Ho: we use specified time instead of search range
-    print('user specified by query')
-    TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
+        #print('user specified by query')
+        #TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
     print('Feature assorcated timestamp in Query Date=', TS)
 
     # establish connection to s3 and search bin file that the mostest close to query date
