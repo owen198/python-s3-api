@@ -202,6 +202,9 @@ def convert_bin (filename, DISPLAYPOINT):
 
     return return_df, file_length
 
+def hexint(b,bReverse=True): 
+    return int(binascii.hexlify(b[::-1]), 16) if bReverse else int(binascii.hexlify(b), 16)
+
 def query_device_name (EQU_ID):
     PG_IP = "192.168.123.238"
     PG_USER = "6e6b8fc2-ea3d-412e-9806-692a4aea5c0e"
@@ -280,23 +283,8 @@ def get_s3_bucket ():
     bucket = s3_connection.get_bucket(BUCKET_NAME, validate=False)
 
     return bucket
-
-def query_smb_byDigit (EQU_ID):
-
     
-    return MACHINE_ID
 
-def query_smb (bucket, EQU_ID):
-    
-    # load folder and sub folder from bucket into a dataframe
-    smb_df = pd.DataFrame(columns=['smb_number', 'EQU_ID', 'n'])
-    for folder in bucket.list(delimiter='/'):
-        for subfolder in bucket.list(delimiter='/', prefix=folder.name):
-            smb_df = smb_df.append(pd.Series(subfolder.name.split('/'), 
-                                             index=['smb_number', 'EQU_ID', 'n']), ignore_index=True)
-
-    machine_id = smb_df[smb_df['EQU_ID']==EQU_ID]['smb_number'].values[0]
-    return machine_id
 
 def combine_return (TIME_START, TIME_DELTA, tdms_DF, tdms_LENGTH):
     
@@ -473,28 +461,6 @@ def convert_equ_name (EQU_NAME):
 
     return EQU_ID
 
-#def convert_bin (filename, pd_type, DISPLAY_POINT):
-def convert_tdms (filename, DISPLAYPOINT):
-    bytes_read = TdmsFile(filename)
-    
-    tdms_groups = bytes_read.groups()
-    # print(tdms_groups)
-    tdms_groups=str(tdms_groups)
-    tdms_Variables_1 = bytes_read.group_channels(tdms_groups.split("'")[1])
-    # print(tdms_Variables_1)
-    tdms_Variables_1=str(tdms_Variables_1)
-    MessageData_channel_1 = bytes_read.object((tdms_Variables_1.split("'")[1]),tdms_Variables_1.split("'")[3])
-    # print(MessageData_channel_1)
-    MessageData_data_1 = MessageData_channel_1.data
-    # MessageData_data_1 
-  
-    return_df  = pd.DataFrame(MessageData_data_1)
-    return_df = return_df.T
-
-    file_length = len(return_df.columns) 
-    length = file_length / DISPLAYPOINT
-
-    return return_df, file_length
 
 
 def read_MongoDB_data(EQU_ID,
