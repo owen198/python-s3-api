@@ -79,7 +79,7 @@ def get_content():
     #else:
         #Dr. Ho: we use specified time instead of search range
     print('user specified by query')
-    TS = query_timestamp (TYPE, FEATURE, EQU_ID,DATE)
+    TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
     print('Feature assorcated timestamp in Query Date=', TS)
 
     # establish connection to s3 and search bin file that the mostest close to query date
@@ -87,7 +87,7 @@ def get_content():
     
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
     
-    MACHINE_ID = query_smb_byDigit(EQU_ID)
+    MACHINE_ID = query_smb_byDigit (EQU_ID)
     #TODO: fix the S3 prefix
     #PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
@@ -95,7 +95,8 @@ def get_content():
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
 
-    FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST,EQU_ID)
+    #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
+    FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
     print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     print("FILE_NAME:",FILE_NAME)    
@@ -363,16 +364,13 @@ def query_timestamp (TYPE, feature, EQU_ID,time_start):
     ## Query MongoDB
     measurement, data = read_MongoDB_data(EQU_ID,
                                         host = mgdb_host,
-                                      port = mgdb_port,
-                                       dbname = mgdb_database,
-                                       # ChannelName = ChannelName,
-                                       time_start = time_start,
-                                       time_end = time_end,
-                                       user = mgdb_username,
-                                       password = mgdb_password,
-                                       DATE = time_start,
-                                       
-                                          )
+                                        port = mgdb_port,
+                                        dbname = mgdb_database,
+                                        time_start = time_start,
+                                        time_end = time_end,
+                                        user = mgdb_username,
+                                        password = mgdb_password,
+                                        DATE = time_start)
 
 
     if TYPE == 'max':
