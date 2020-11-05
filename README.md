@@ -1,4 +1,5 @@
-
+$GETchannelID@Acceleration RMS band 0@$currentTime@$Para
+1Y520210100@Acceleration RMS band 0@1604566653000@Velocity
 
 ### Request
 
@@ -43,7 +44,7 @@ Example
     "intervalMs": 15000,
     "targets": [
         {
-            "target": "1Y510110100@Acceleration RMS band 0@min",
+            "target": "Y412vPod001@Acceleration RMS band 0@1596243386000@Velocity",
             "refId": "A",
             "type": "timeserie"
         }

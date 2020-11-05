@@ -91,7 +91,9 @@ def get_content():
     MACHINE_ID = query_smb_byDigit (EQU_ID)
     #TODO: fix the S3 prefix
     #PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
-    PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
+    #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
+    DEVICE_NAME = '#1內冷式ROT Roller WS_vpod'
+    PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
 
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
