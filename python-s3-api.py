@@ -95,10 +95,11 @@ def get_content():
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
 
-    print ('hour=', str(TS.strftime("%H")))
-    print ('hour=', str(TS.strftime("%h")))
-    print ('minutes=', str(TS.strftime("%M")))
-    print ('Raw Data-' + DEVICE_NAME + '_vpod-' + str(TS.strftime("%H")) + '_25600.bin')
+    HOUR = str(TS.strftime("%H"))
+    MIN = str(TS.strftime("%M"))
+    SECOND = str(TS.strftime("%S"))
+    print ('Raw Data-' + DEVICE_NAME + '_vpod-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin')
+    FILE_NAME = 'Raw Data-' + DEVICE_NAME + '_vpod-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
 
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
@@ -167,9 +168,9 @@ def get_content():
     #    MIN = FILE_NAME.decode().split('-')[3]
     #    SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
     #elif station =='2FM':
-    HOUR = FILE_NAME.decode().split('-')[2]
-    MIN = FILE_NAME.decode().split('-')[3]
-    SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
+    #HOUR = FILE_NAME.decode().split('-')[2]
+    #MIN = FILE_NAME.decode().split('-')[3]
+    #SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
     #else:    
     #    HOUR = FILE_NAME.decode().split('-')[3]
     #    MIN = FILE_NAME.decode().split('-')[4]
