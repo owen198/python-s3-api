@@ -16,6 +16,7 @@ import struct
 import requests
 
 from pymongo import MongoClient
+import psycopg2
 
 # import scipy
 
@@ -239,58 +240,7 @@ def get_s3_bucket ():
 
 def query_smb_byDigit (EQU_ID):
 
-    # TODO: remove this function due to no equ concept in vPodPro
-    S3_BUCKET = get_s3_bucket()
-    filename = 'tag_list.csv'
-    tag_list = os.path.join('/', filename)
-    key =S3_BUCKET.get_key(tag_list)
-    key.get_contents_to_filename(filename)
-
-    df = pd.read_csv('tag_list.csv', encoding='big5')
-
-    df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
-    df['line'] = 0
-    for idx, row in df.iterrows():  
-        Station = row['Station']
-        if Station == '505':
-            line = ("條二")
-        elif Station == '506':
-            line = ("條二")
-
-        elif Station == '307':
-            line = ("線一")        
-        elif Station == '308':
-            line = ("線一")        
-        elif Station == '310':
-            line = ("線一")
-        elif Station == '314':
-            line = ("線一")        
-        elif Station == '315':
-            line = ("線一")    
-
-        elif Station == '1FM':
-            line = ("線二")        
-        elif Station == '1RSM':
-            line = ("線二")        
-        elif Station == '2FM':
-            line = ("線二")        
-        elif Station == '2RSM':
-            line = ("線二")                        
-        else:
-            line = "NaN"
-        df.loc[idx, 'line'] = line
-
-    df1 = df.loc[ df['ID Number'] == EQU_ID ]
-    df1 = df1.values.tolist()
-
-    Channel_Name = df1[0][0]
-    Station = df1[0][3]
-    line = df1[0][8]  
     
-    MACHINE_ID = line + '/' + Station + '/' + Channel_Name + '/' 
-    
-#     MACHINE_ID = (MACHINE_ID).encode('utf-8').strip()
-    os.remove(filename)
     return MACHINE_ID
 
 def query_smb (bucket, EQU_ID):
