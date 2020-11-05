@@ -28,7 +28,7 @@ from flask import jsonify
 app = Flask(__name__)
 
 
-@app.route("/search", methods=['GET','POST'])
+@app.route("/", methods=['GET','POST'])
 def test_1():
     """
     for simple json.
