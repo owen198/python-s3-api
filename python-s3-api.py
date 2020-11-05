@@ -71,16 +71,16 @@ def get_content():
     
     # User specified a timestamp
     SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
-    if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
-        print('user specified time and date')
-        TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
-        TS = TS + datetime.timedelta(hours=8)
-        print('Feature assorcated timestamp in Query Date=', TS)
-    else:
-        #TODO: ask Dr. Ho see if we still need this
-        print('user specified by query')
-        TS = query_timestamp (TYPE, FEATURE, EQU_ID,DATE)
-        print('Feature assorcated timestamp in Query Date=', TS)
+    #if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
+    #    print('user specified time and date')
+    #    TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
+    #    TS = TS + datetime.timedelta(hours=8)
+    #    print('Feature assorcated timestamp in Query Date=', TS)
+    #else:
+        #Dr. Ho: we use specified time instead of search range
+    print('user specified by query')
+    TS = query_timestamp (TYPE, FEATURE, EQU_ID,DATE)
+    print('Feature assorcated timestamp in Query Date=', TS)
 
     # establish connection to s3 and search bin file that the mostest close to query date
     S3_BUCKET = get_s3_bucket()
@@ -89,7 +89,9 @@ def get_content():
     
     MACHINE_ID = query_smb_byDigit(EQU_ID)
     #TODO: fix the S3 prefix
-    PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    #PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
+
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
 
@@ -514,7 +516,7 @@ def read_MongoDB_data(EQU_ID,
                        user = '8f28b802-3bfc-4d54-ae71-b21bb69320e2',
                        password = 'KI4j31AE5kUpv4HxgvLphtD26',
                        mgdb_collection = 'w4_features',
-                       DATE='',
+                       DATE=''
                        
                        ):
     
