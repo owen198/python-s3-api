@@ -17,7 +17,7 @@ import requests
 
 from pymongo import MongoClient
 import psycopg2
-
+import pandas.io.sql as sqlio
 # import scipy
 
 from flask import Flask
