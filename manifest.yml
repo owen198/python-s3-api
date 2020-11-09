@@ -1,30 +1,30 @@
 ---
 applications:
-- name: y4-s3-api-tdms
+- name: y4-tdms-s3-api
   memory: 512M
   instances: 1
   buildpack: python_buildpack_offline
   command: python python-s3-api.py
 
-- name: y4-s3-api-fft-tdms
+- name: y4-tdms-s3-api-fft
   memory: 512M
   instances: 1
   buildpack: python_buildpack_offline
   command: python python-s3-api.py
 
-- name: y4-s3-api-wavelet-tdms
+- name: y4-tdms-api-wavelet
   memory: 512M
   instances: 1
   buildpack: python_buildpack_offline
   command: python python-s3-api.py
 
-- name: y4-s3-api-envelop-tdms
+- name: y4-tdms-s3-api-envelop
   memory: 512M
   instances: 1
   buildpack: python_buildpack_offline
   command: python python-s3-api.py
 
-- name: y4-s3-api-ceps-tdms
+- name: y4-tdms-s3-api-ceps
   memory: 512M
   instances: 1
   buildpack: python_buildpack_offline
