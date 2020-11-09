@@ -68,7 +68,7 @@ def get_content():
     #if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
     #    print('user specified time and date')
     TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
-    TS = TS + datetime.timedelta(hours=8)
+    #TS = TS + datetime.timedelta(hours=8)
     #    print('Feature assorcated timestamp in Query Date=', TS)
     #else:
         #Dr. Ho: we use specified time instead of search range
@@ -92,10 +92,11 @@ def get_content():
     MIN = str(TS.strftime("%M"))
     SECOND = str(TS.strftime("%S"))
     print ('Raw Data-' + DEVICE_NAME + '_vpod-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin')
-    FILE_NAME = 'Raw Data-' + DEVICE_NAME + '_vpod-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
+    FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
 
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     #FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
+                 'Raw Data-#1內冷式ROT Roller WS_vpod-08-56-26_25600.bin'
     print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     print("FILE_NAME:",FILE_NAME)    
