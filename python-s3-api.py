@@ -96,7 +96,7 @@ def get_content():
 
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     #FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
-                 'Raw Data-#1內冷式ROT Roller WS_vpod-08-56-26_25600.bin'
+
     print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     print("FILE_NAME:",FILE_NAME)    
