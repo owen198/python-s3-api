@@ -95,18 +95,19 @@ def get_content():
     FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
 
 
+    '#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/'
+    'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-26_25600.bin'
 
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     #FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
-
 
     print("FILE_NAMEx:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     print("FILE_NAME:",FILE_NAME)    
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
-    if FILE_NAME is 'null':
-        return 'File not found'
+    #if FILE_NAME is 'null':
+    #    return 'File not found'
 
     # goto bucket and get file accroding to the file name
     s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
