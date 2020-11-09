@@ -91,15 +91,16 @@ def get_content():
     HOUR = str(TS.strftime("%H"))
     MIN = str(TS.strftime("%M"))
     SECOND = str(TS.strftime("%S"))
-    print ('Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin')
+    #print ('Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin')
     FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
+
+
 
     #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
     #FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
 
 
-
-    print("FILE_NAME:",FILE_NAME)
+    print("FILE_NAMEx:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     print("FILE_NAME:",FILE_NAME)    
     
