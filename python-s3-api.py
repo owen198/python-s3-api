@@ -27,7 +27,7 @@ from flask import jsonify
 app = Flask(__name__)
 
 
-@app.route("/search", methods=['GET','POST'])
+@app.route("/", methods=['GET','POST'])
 def test_1():
     """
     for simple json.
@@ -86,8 +86,12 @@ def get_content():
     
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
     
-    MACHINE_ID = query_smb_byDigit(EQU_ID)
-    PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    #MACHINE_ID = query_smb_byDigit(EQU_ID)
+    #PATH_DEST = MACHINE_ID  + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    DEVICE_NAME = query_device_name (EQU_ID)
+    #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
+    PATH_DEST = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
 
@@ -168,6 +172,26 @@ def get_content():
     RETURN = combine_return (TIME_START, TIME_DELTA, tdms_DF,tdms_LENGTH)
 
     return RETURN
+    
+def query_device_name (EQU_ID):
+    PG_IP = "192.168.123.238"
+    PG_USER = "6e6b8fc2-ea3d-412e-9806-692a4aea5c0e"
+    PG_PASS = "huu1enrd9rrsptr86kvapqk4pe"
+    PG_DB = "214c2b8f-c62b-4133-82a8-93eb2dc59277"
+
+    conn = psycopg2.connect(
+                            host = PG_IP,
+                            database = PG_DB,
+                            user = PG_USER,
+                            password = PG_PASS)
+
+    sql = r'SELECT * FROM "CSC_FOMOS"."Y4_Channel_List";'
+    tag_list_pd = sqlio.read_sql_query(sql, conn)
+    conn.close()
+
+    device_name = tag_list_pd[tag_list_pd['channelID'] == EQU_ID]['channel_name'].values[0]
+
+    return device_name
 
 def query_file (TS, bucket, PATH_DEST,EQU_ID):
     S3_BUCKET = get_s3_bucket()
@@ -209,12 +233,12 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
 
 def get_s3_bucket ():
     # load value of key for access blob container (bucket)
-    ACCESS_KEY = 'cc0b4b06affd4f599dff7607f1556811'
-    SECRET_KEY = 'U7fxYmr8idml083N8zo7JRddXiNbyCmNN'
-    HOST = '192.168.123.226'
-    PORT = 8080
-#     BUCKET_NAME = 'fomos-w4'
-    BUCKET_NAME = 'FOMOS-W4'    
+    ACCESS_KEY = 't7user1'
+    SECRET_KEY = 'Bhw0MdOHfFL9h03u3epl4AoLxl/sOu0UvELUBL1h'
+    HOST = 'object.csc.com.tw'
+    PORT = 9020
+#     BUCKET_NAME = 'fomos-Y4'
+    BUCKET_NAME = 'Y4_HSM'    
     # establish connection between blob storage and this client app
     s3_connection = boto.connect_s3(
                    aws_access_key_id = ACCESS_KEY,
@@ -342,7 +366,7 @@ def query_timestamp (TYPE, feature, EQU_ID,time_start):
     mgdb_database = Json_array['credential']['database']
     mgdb_username = Json_array['credential']['username']
     mgdb_password = Json_array['credential']['password']
-    mgdb_collection = 'w4_features'
+    mgdb_collection = 'Y4_features'
 
     time_start = time_start.replace("/", "-")
 #     print("time_start",time_start)
@@ -352,15 +376,15 @@ def query_timestamp (TYPE, feature, EQU_ID,time_start):
 #     print('time_end', type(time_end), time_end)
     ## Query MongoDB
     measurement, data = read_MongoDB_data(EQU_ID,
-                                        host = mgdb_host,
-                                      port = mgdb_port,
-                                       dbname = mgdb_database,
+                                        #host = mgdb_host,
+                                      #port = mgdb_port,
+                                       #dbname = mgdb_database,
                                        # ChannelName = ChannelName,
                                        time_start = time_start,
                                        time_end = time_end,
-                                       user = mgdb_username,
-                                       password = mgdb_password,
-                                       DATE = time_start,
+                                       #user = mgdb_username,
+                                       #password = mgdb_password,
+                                       DATE = time_start
                                        
                                           )
 
@@ -499,14 +523,14 @@ def convert_tdms (filename, DISPLAYPOINT):
 def read_MongoDB_data(EQU_ID,
                         host = '10.100.10.1',
                        port = '27017',
-                       dbname = '2eeb002d-1fcd-44a5-8370-648a43eef634',
+                       dbname = 'd21d5987-3b65-4fae-9b02-79f72b39b735',
                        # ChannelName='1Y520210100',
                        time_start='', 
                        time_end='', 
-                       user = '8f28b802-3bfc-4d54-ae71-b21bb69320e2',
-                       password = 'KI4j31AE5kUpv4HxgvLphtD26',
-                       mgdb_collection = 'w4_features',
-                       DATE='',
+                       user = '0c1e58e3-8643-4ff3-8633-7820f10f4902',
+                       password = 'SPRXaEL2RIIeve2lsHV9oAjCc',
+                       mgdb_collection = 'y4_features',
+                       DATE=''
                        
                        ):
     
@@ -540,7 +564,7 @@ def read_MongoDB_data(EQU_ID,
             {'timestamp':{"$gte":epoch_DATE}},
             {"timestamp":{"$lte":epoch_DATE_1}},
             {'device':EQU_ID } ] })))
-    
+    print(len(data))
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
     
 
