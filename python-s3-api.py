@@ -65,6 +65,8 @@ def get_content():
     # Dr. Ho: we use specified time instead of search range
     # User specified a timestamp
     SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
+
+    # TODO: use a condition(if) here if merge bin / tdms
     #if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
     #    print('user specified time and date')
     TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
@@ -80,7 +82,8 @@ def get_content():
     S3_BUCKET = get_s3_bucket()
     
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
-    
+
+    # TODO: use a condition(if) here if merge bin / tdms
     DEVICE_NAME = query_device_name (EQU_ID)
     #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
     PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
@@ -91,7 +94,8 @@ def get_content():
     HOUR = str(TS.strftime("%H"))
     MIN = str(TS.strftime("%M"))
     SECOND = str(TS.strftime("%S"))
-    #print ('Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin')
+    
+    # TODO: use a condition(if) here if merge bin / tdms
     FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
 
 
