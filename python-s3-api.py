@@ -130,28 +130,20 @@ def get_content():
 
     if '_vpod' in DEVICE_NAME:
         DATA_DF, DATA_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
-        if SignalType=='velocity':
-            print('velocity change, size from:')
-            print(DATA_DF.shape)
-            DATA_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(DATA_DF.values.T,1.0/8192)).T
-            print('velocity change, size to:')
-            print(DATA_DF.shape)
-            print(DATA_DF.values)
     else:
         DATA_DF,DATA_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
-        if SignalType=='velocity':
-            print('velocity change, size from:')
-            print(DATA_DF.shape)
-            DATA_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(DATA_DF.values.T,1.0/8192)).T
-            print('velocity change, size to:')
-            print(DATA_DF.shape)
-            print(DATA_DF.values)
-            print(type(DATA_DF.values))
 
+    if SignalType=='velocity':
+        print('velocity change, size from:')
+        print(DATA_DF.shape)
+        DATA_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(DATA_DF.values.T,1.0/8192)).T
+        print('velocity change, size to:')
+        print(DATA_DF.shape)
+        print(DATA_DF.values)
+        print(type(DATA_DF.values))
 
     # calculate start-time and end-time for grafana representation
     S3_BUCKET = get_s3_bucket()
-
 
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
@@ -228,44 +220,6 @@ def query_device_name (EQU_ID):
 
     return device_name
 
-def query_file (TS, bucket, PATH_DEST,EQU_ID):
-    S3_BUCKET = get_s3_bucket()
-    filename = 'tag_list.csv'
-    tag_list = os.path.join('/', filename)
-    key =S3_BUCKET.get_key(tag_list)
-    key.get_contents_to_filename(filename)
-    df = pd.read_csv('tag_list.csv', encoding='big5')
-    df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
-    df1 = df.loc[ df['ID Number'] == EQU_ID ]
-    df1 = df1.values.tolist()
-    Channel_Name = df1[0][0]
-    station = df1[0][3]
-    #time 
-    os.remove(filename)
-    TS_H = TS.strftime('%H')
-    TS_M = TS.strftime('%M')
-    TS_S = TS.strftime('%S')
-
-    if station == '505':
-        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-    elif station == '506':
-        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-    elif station == '307':
-        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-    elif station == '308':
-        filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-    elif station == '1FM':
-        filename = 'Raw Data-'+ Channel_Name +'-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-    elif station == '2FM':
-        filename = 'Raw Data-'+ Channel_Name +'-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-    else:
-        print("query_file error")
-
-    # filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-#     filename = f"Raw Data-{Channel_Name}-rolling-{TS_H}-{TS_M}-{TS_S}.tdms"
-
-    return filename
-
 def get_s3_bucket ():
     # load value of key for access blob container (bucket)
     ACCESS_KEY = 't7user1'
@@ -287,8 +241,6 @@ def get_s3_bucket ():
 
     return bucket
     
-
-
 def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     
     # load 'data' and 'index' in bin file, and append it into a list
@@ -335,11 +287,11 @@ def query_timestamp (TYPE, feature, EQU_ID,time_start):
     mgdb_collection = 'Y4_features'
 
     time_start = time_start.replace("/", "-")
-#     print("time_start",time_start)
     time_end = datetime.datetime.strptime(time_start, '%Y-%m-%d') + datetime.timedelta(days=1)
 #     print('time_end', type(time_end), time_end)
     time_end = time_end.strftime("%Y-%m-%d")
-#     print('time_end', type(time_end), time_end)
+    print("time_start",time_start)
+    print('time_end', type(time_end), time_end)
     ## Query MongoDB
     measurement, data = read_MongoDB_data(EQU_ID,
                                         #host = mgdb_host,
@@ -468,13 +420,11 @@ def read_MongoDB_data(EQU_ID,
                         host = '10.100.10.1',
                        port = '27017',
                        dbname = 'd21d5987-3b65-4fae-9b02-79f72b39b735',
-                       # ChannelName='1Y520210100',
                        time_start='', 
                        time_end='', 
                        user = '0c1e58e3-8643-4ff3-8633-7820f10f4902',
                        password = 'SPRXaEL2RIIeve2lsHV9oAjCc',
-                       mgdb_collection = 'y4_features',
-                       DATE=''
+                       mgdb_collection = 'y4_features'
                        
                        ):
     
@@ -489,8 +439,8 @@ def read_MongoDB_data(EQU_ID,
     measurement = db.list_collection_names()
 
     import time
-#     DATE ='2019-11-01'
     from datetime import datetime, timedelta
+
     DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
     print("DATE",DATE)
     import datetime
@@ -508,7 +458,7 @@ def read_MongoDB_data(EQU_ID,
             {'timestamp':{"$gte":epoch_DATE}},
             {"timestamp":{"$lte":epoch_DATE_1}},
             {'device':EQU_ID } ] })))
-    print(len(data))
+    print('length', len(data))
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
     
 
