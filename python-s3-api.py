@@ -149,14 +149,26 @@ def get_content():
     #'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
     #'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-26_25600.bin'
 
-    BIN_DF, BIN_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
-    if SignalType=='velocity':
-        print('velocity change, size from:')
-        print(BIN_DF.shape)
-        BIN_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(BIN_DF.values.T,1.0/8192)).T
-        print('velocity change, size to:')
-        print(BIN_DF.shape)
-        print(BIN_DF.values)
+    if '_vpod' in DEVICE_NAME:
+        DATA_DF, DATA_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
+        if SignalType=='velocity':
+            print('velocity change, size from:')
+            print(DATA_DF.shape)
+            DATA_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(DATA_DF.values.T,1.0/8192)).T
+            print('velocity change, size to:')
+            print(DATA_DF.shape)
+            print(DATA_DF.values)
+    else:
+        DATA_DF,DATA_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
+        if SignalType=='velocity':
+            print('velocity change, size from:')
+            print(DATA_DF.shape)
+            DATA_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(DATA_DF.values.T,1.0/8192)).T
+            print('velocity change, size to:')
+            print(DATA_DF.shape)
+            print(DATA_DF.values)
+            print(type(DATA_DF.values))
+
 
     # calculate start-time and end-time for grafana representation
     S3_BUCKET = get_s3_bucket()
@@ -174,10 +186,31 @@ def get_content():
     os.remove(FILE_NAME)
 
     # combine response json object follow the rule of grafana simpleJSON
-    RETURN = combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH)
+    RETURN = combine_return (TIME_START, TIME_DELTA, DATA_DF, DATA_LENGTH)
 
     return RETURN
 
+def convert_tdms (filename, DISPLAYPOINT):
+    bytes_read = TdmsFile(filename)
+    
+    tdms_groups = bytes_read.groups()
+    # print(tdms_groups)
+    tdms_groups=str(tdms_groups)
+    tdms_Variables_1 = bytes_read.group_channels(tdms_groups.split("'")[1])
+    # print(tdms_Variables_1)
+    tdms_Variables_1=str(tdms_Variables_1)
+    MessageData_channel_1 = bytes_read.object((tdms_Variables_1.split("'")[1]),tdms_Variables_1.split("'")[3])
+    # print(MessageData_channel_1)
+    MessageData_data_1 = MessageData_channel_1.data
+    # MessageData_data_1 
+  
+    return_df  = pd.DataFrame(MessageData_data_1)
+    return_df = return_df.T
+
+    file_length = len(return_df.columns) 
+    length = file_length / DISPLAYPOINT
+
+    return return_df, file_length
 
 def convert_bin (filename, DISPLAYPOINT):
     bytes_read = open(filename, "rb").read()
