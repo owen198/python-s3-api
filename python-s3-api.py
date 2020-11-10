@@ -251,7 +251,12 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     jsonobj_mean = json.loads(BIN_DF.to_json(orient='split'))
 
     datapoints_array_mean = []
+
+    print('len1', BIN_LENGTH)
+    print('len2', len(jsonobj_mean))
+
     for i in range(0, BIN_LENGTH):
+        print(i)
         datapoints_array_mean.append([jsonobj_mean['data'][i][0], TIME_START])
         TIME_START = float(TIME_START) + TIME_DELTA
 
