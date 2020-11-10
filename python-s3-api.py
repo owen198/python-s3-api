@@ -67,11 +67,11 @@ def get_content():
     # User specified a timestamp
     SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
 
-
     # check bin or tdms
     DEVICE_NAME = query_device_name (EQU_ID)
     if '_vpod' in DEVICE_NAME:
         #bin
+        print('user specified time and date')
         TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
         TS + datetime.timedelta(hours=8)
     else:
@@ -80,32 +80,18 @@ def get_content():
             print('user specified time and date')
             TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
             TS = TS + datetime.timedelta(hours=8)
-            print('Feature assorcated timestamp in Query Date=', TS)
         else:
             print('user specified by query')
             TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
-            print('Feature assorcated timestamp in Query Date=', TS)
 
 
-    #if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
-    #    print('user specified time and date')
-    #TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
-    #TS = TS + datetime.timedelta(hours=8)
-    #    print('Feature assorcated timestamp in Query Date=', TS)
-    #else:
-        #Dr. Ho: we use specified time instead of search range
-        #print('user specified by query')
-        #TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
     print('Feature assorcated timestamp in Query Date=', TS)
 
     # establish connection to s3 and search bin file that the mostest close to query date
     S3_BUCKET = get_s3_bucket()
-    
-    # parsing EQU_ID to get SMB_ID, for combining S3 Path
+
 
     # TODO: use a condition(if) here if merge bin / tdms
-    #DEVICE_NAME = query_device_name (EQU_ID)
-    #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
     if '_vpod' in DEVICE_NAME:
         PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     else:
@@ -125,18 +111,11 @@ def get_content():
     print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     
-    # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
-    #if FILE_NAME is 'null':
-    #    return 'File not found'
 
     # goto bucket and get file accroding to the file name
     s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
-#     print("s3_tdms_data: ",s3_tdms_data)
     key = S3_BUCKET.get_key(s3_tdms_data)
-#     print('key: ', key)
-#     print('tdms file that the most closest to timestamp in Query Date=)
-    
-    # download content for convert bin to plantext
+
     try:
         key.get_contents_to_filename(FILE_NAME)
     except:
@@ -178,7 +157,7 @@ def get_content():
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
     TIME_START = TIME_START - datetime.timedelta(hours=8)
     TIME_START = TIME_START.timestamp() * 1000
-    TIME_DELTA = float(float(BIN_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
+    TIME_DELTA = float(float(DATA_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
     print ('Grafana x-axis TIME_START=', TIME_START)
     print('Datatime='+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
