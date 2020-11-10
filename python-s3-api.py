@@ -108,7 +108,7 @@ def get_content():
     
 
     # Define sampling rate
-    if '_vpod' in DEVICE_NAME:
+    if '_vpod' in device_name:
         print(int(filename.split('_')[-1].split('.')[0]))
         sampling_rate =  int(filename.split('_')[-1].split('.')[0])
     else:
