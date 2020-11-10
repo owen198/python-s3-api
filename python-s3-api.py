@@ -133,8 +133,6 @@ def get_content():
     else:
         DATA_DF, DATA_LENGTH = convert_tdms (FILE_NAME, DISPLAY_POINT)
 
-    print ('data_lenght=', DATA_LENGTH)
-
     if SignalType=='velocity':
         print('velocity change, size from:')
         print(DATA_DF.shape)
@@ -254,9 +252,6 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     jsonobj_mean = json.loads(BIN_DF.to_json(orient='split'))
 
     datapoints_array_mean = []
-
-    print('len1', BIN_LENGTH)
-    print('len2', len(jsonobj_mean))
 
     for i in range(0, BIN_LENGTH):
         datapoints_array_mean.append([jsonobj_mean['data'][i][0], TIME_START])
