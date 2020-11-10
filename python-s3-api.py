@@ -443,11 +443,15 @@ def read_MongoDB_data(EQU_ID,
     #epoch_DATE = int(time.mktime(time.strptime(DATE, pattern)))
     #epoch_DATE_1 = int(time.mktime(time.strptime(DATE_1, pattern)))
     #print("epoch_DATE_1",epoch_DATE_1)
+
+    gt = int(datetime.datetime.strptime(time_start + ' 0:0:0' , '%Y-%m-%d %H:%M:%S').strftime('%s'))
+    lt = int(datetime.datetime.strptime(time_end + ' 23:59:59', '%Y-%m-%d %H:%M:%S').strftime('%s'))
+
     data = pd.DataFrame(list(collection.find({
-        "$and":[
-            {'timestamp':{"$gte":time_start}},
-            {"timestamp":{"$lte":time_end}},
-            {'device':EQU_ID } ] })))
+        "$and":[ 
+            { 'timestamp': {'$gt':gt, '$lt': lt} }, 
+            { 'device': EQU_ID } ] })))
+            
     print('length', len(data))
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
     
