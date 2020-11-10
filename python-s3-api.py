@@ -46,7 +46,7 @@ def get_content():
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
     DATE = datetime.datetime.strptime(date_obj, '%Y-%m-%dT%H:%M:%S.%fZ')
-    DATE = DATE + datetime.timedelta(hours=8)
+    DATE = DATE + datetime.timedelta(hours=16)
     # DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)    
     DATE = DATE.strftime('%Y-%m-%d')
 
