@@ -46,8 +46,8 @@ def get_content():
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
     DATE = datetime.datetime.strptime(date_obj, '%Y-%m-%dT%H:%M:%S.%fZ')
-    DATE = DATE + datetime.timedelta(hours=16)
-    # DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)    
+    DATE = DATE + datetime.timedelta(hours=8)
+    #DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)    
     DATE = DATE.strftime('%Y-%m-%d')
 
     EQU_ID = target_obj.split('@')[0]
@@ -73,7 +73,7 @@ def get_content():
         #bin
         print('user specified time and date')
         TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
-        TS + datetime.timedelta(hours=8)
+        TS = TS + datetime.timedelta(hours=8)
     else:
         #tdms
         if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
@@ -113,8 +113,8 @@ def get_content():
     
 
     # goto bucket and get file accroding to the file name
-    s3_tdms_data = os.path.join(PATH_DEST, FILE_NAME)
-    key = S3_BUCKET.get_key(s3_tdms_data)
+    s3_data = os.path.join(PATH_DEST, FILE_NAME)
+    key = S3_BUCKET.get_key(s3_data)
 
     try:
         key.get_contents_to_filename(FILE_NAME)
