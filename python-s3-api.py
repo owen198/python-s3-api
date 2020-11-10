@@ -180,10 +180,10 @@ def convert_tdms (filename, DISPLAYPOINT):
     return_df  = pd.DataFrame(MessageData_data_1)
 
     print('len3',len(return_df))
-    return_df = return_df.T
-    print('len4',len(return_df))
+    #return_df = return_df.T
+    #print('len4',len(return_df))
 
-    file_length = len(return_df.columns) 
+    file_length = len(return_df) 
 
     #length = file_length / DISPLAYPOINT
 
