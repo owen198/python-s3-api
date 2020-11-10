@@ -61,16 +61,36 @@ def get_content():
     print('Type=' + TYPE)
     print('SignalType=' + SignalType)
     print('Query Date=' + DATE)
+
     
     # Dr. Ho: we use specified time instead of search range
     # User specified a timestamp
     SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
 
-    # TODO: use a condition(if) here if merge bin / tdms
+
+    # check bin or tdms
+    DEVICE_NAME = query_device_name (EQU_ID)
+    if '_vpod' in DEVICE_NAME:
+        #bin
+        TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
+        TS + datetime.timedelta(hours=8)
+    else:
+        #tdms
+        if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
+            print('user specified time and date')
+            TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
+            TS = TS + datetime.timedelta(hours=8)
+            print('Feature assorcated timestamp in Query Date=', TS)
+        else:
+            print('user specified by query')
+            TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
+            print('Feature assorcated timestamp in Query Date=', TS)
+
+
     #if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
     #    print('user specified time and date')
-    TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
-    TS = TS + datetime.timedelta(hours=8)
+    #TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
+    #TS = TS + datetime.timedelta(hours=8)
     #    print('Feature assorcated timestamp in Query Date=', TS)
     #else:
         #Dr. Ho: we use specified time instead of search range
@@ -84,10 +104,12 @@ def get_content():
     # parsing EQU_ID to get SMB_ID, for combining S3 Path
 
     # TODO: use a condition(if) here if merge bin / tdms
-    DEVICE_NAME = query_device_name (EQU_ID)
+    #DEVICE_NAME = query_device_name (EQU_ID)
     #PATH_DEST = "#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/"
-    PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
-
+    if '_vpod' in DEVICE_NAME:
+        PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+    else:
+        PATH_DEST = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
 
@@ -96,15 +118,12 @@ def get_content():
     SECOND = str(TS.strftime("%S"))
     
     # TODO: use a condition(if) here if merge bin / tdms
-    FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
-
-
-    #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST, EQU_ID)
-    #FILE_NAME = 'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
-
-    print("FILE_NAMEx:",FILE_NAME)
+    if '_vpod' in DEVICE_NAME:
+        FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
+    else:
+        FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
+    print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
-    print("FILE_NAME:",FILE_NAME)    
     
     # to catch bin file not exist issue, for example: 1Y510110107, 2019-05-21T20:49:55.000Z
     #if FILE_NAME is 'null':
@@ -301,7 +320,7 @@ def query_timestamp (TYPE, feature, EQU_ID,time_start):
     mgdb_database = Json_array['credential']['database']
     mgdb_username = Json_array['credential']['username']
     mgdb_password = Json_array['credential']['password']
-    mgdb_collection = 'w4_features'
+    mgdb_collection = 'Y4_features'
 
     time_start = time_start.replace("/", "-")
 #     print("time_start",time_start)
@@ -311,14 +330,17 @@ def query_timestamp (TYPE, feature, EQU_ID,time_start):
 #     print('time_end', type(time_end), time_end)
     ## Query MongoDB
     measurement, data = read_MongoDB_data(EQU_ID,
-                                        host = mgdb_host,
-                                        port = mgdb_port,
-                                        dbname = mgdb_database,
-                                        time_start = time_start,
-                                        time_end = time_end,
-                                        user = mgdb_username,
-                                        password = mgdb_password,
-                                        DATE = time_start)
+                                        #host = mgdb_host,
+                                      #port = mgdb_port,
+                                       #dbname = mgdb_database,
+                                       # ChannelName = ChannelName,
+                                       time_start = time_start,
+                                       time_end = time_end,
+                                       #user = mgdb_username,
+                                       #password = mgdb_password,
+                                       DATE = time_start
+                                       
+                                          )
 
 
     if TYPE == 'max':
@@ -433,13 +455,13 @@ def convert_equ_name (EQU_NAME):
 def read_MongoDB_data(EQU_ID,
                         host = '10.100.10.1',
                        port = '27017',
-                       dbname = '2eeb002d-1fcd-44a5-8370-648a43eef634',
+                       dbname = 'd21d5987-3b65-4fae-9b02-79f72b39b735',
                        # ChannelName='1Y520210100',
                        time_start='', 
                        time_end='', 
-                       user = '8f28b802-3bfc-4d54-ae71-b21bb69320e2',
-                       password = 'KI4j31AE5kUpv4HxgvLphtD26',
-                       mgdb_collection = 'w4_features',
+                       user = '0c1e58e3-8643-4ff3-8633-7820f10f4902',
+                       password = 'SPRXaEL2RIIeve2lsHV9oAjCc',
+                       mgdb_collection = 'y4_features',
                        DATE=''
                        
                        ):
@@ -474,7 +496,7 @@ def read_MongoDB_data(EQU_ID,
             {'timestamp':{"$gte":epoch_DATE}},
             {"timestamp":{"$lte":epoch_DATE_1}},
             {'device':EQU_ID } ] })))
-    
+    print(len(data))
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
     
 
