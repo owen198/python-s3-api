@@ -104,19 +104,20 @@ def get_content():
 
     print("PATH_DEST:",PATH_DEST)
     print("FILE_NAME:",FILE_NAME)
-    PATH_DEST=PATH_DEST.encode('utf-8').strip()
-    FILE_NAME = FILE_NAME.encode('utf-8').strip()
+    
 
     
 
     # Define sampling rate
     if '_vpod' in DEVICE_NAME:
-        SAMPLE_RATE =  int(FILE_NAME.decode("utf-8").split('_')[-1].split('.'))[0]
+        SAMPLE_RATE =  int(FILE_NAME.split('_')[-1].split('.'))[0]
     else:
         SAMPLE_RATE =  60000
     print('SAMPLE_RATE:', SAMPLE_RATE)
 
     # connect to bucket and get file
+    PATH_DEST = PATH_DEST.encode('utf-8').strip()
+    FILE_NAME = FILE_NAME.encode('utf-8').strip()
     s3_data = os.path.join(PATH_DEST, FILE_NAME)
     S3_BUCKET = get_s3_bucket()
     key = S3_BUCKET.get_key(s3_data)
@@ -148,17 +149,14 @@ def get_content():
 
 
     # calculate start-time and end-time for grafana representation
-    #S3_BUCKET = get_s3_bucket()
-
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
     TIME_START = TIME_START - datetime.timedelta(hours=8)
     TIME_START = TIME_START.timestamp() * 1000
     TIME_DELTA = float(float(DATA_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
-
     print ('Grafana x-axis TIME_START=', TIME_START)
     print ('Grafana x-axis TIME_DELTA=', TIME_DELTA)
-    #print('Datatime='+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
 
     # delete file which stored in local
     os.remove(FILE_NAME)
