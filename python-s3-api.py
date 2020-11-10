@@ -37,8 +37,9 @@ def test_1():
 @app.route('/query', methods=['POST'])
 def get_content():
     
-    SAMPLE_RATE = 8192
+    #SAMPLE_RATE = 8192
     DISPLAY_POINT = 65536   
+
 
     # retrieve post JSON object
     jsonobj = request.get_json(silent=True)
@@ -63,11 +64,9 @@ def get_content():
     print('Query Date=' + DATE)
 
     
-    # Dr. Ho: we use specified time instead of search range
-    # User specified a timestamp
-    SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
 
-    # check bin or tdms
+    # consider timestamp
+    SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
     DEVICE_NAME = query_device_name (EQU_ID)
     if '_vpod' in DEVICE_NAME:
         #bin
@@ -84,14 +83,11 @@ def get_content():
             print('user specified by query')
             TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
 
-
     print('Feature assorcated timestamp in Query Date=', TS)
 
-    # establish connection to s3 and search bin file that the mostest close to query date
-    S3_BUCKET = get_s3_bucket()
 
 
-    # TODO: use a condition(if) here if merge bin / tdms
+    # Define s3 prefix
     if '_vpod' in DEVICE_NAME:
         PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
     else:
@@ -103,17 +99,25 @@ def get_content():
     MIN = str(TS.strftime("%M"))
     SECOND = str(TS.strftime("%S"))
     
-    # TODO: use a condition(if) here if merge bin / tdms
+    # Define filename
     if '_vpod' in DEVICE_NAME:
         FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
     else:
         FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
     print("FILE_NAME:",FILE_NAME)
-    FILE_NAME=FILE_NAME.encode('utf-8').strip()
+    FILE_NAME = FILE_NAME.encode('utf-8').strip()
     
 
-    # goto bucket and get file accroding to the file name
+    # Define sampling rate
+    if '_vpod' in DEVICE_NAME:
+        SAMPLE_RATE =  int(FILE_NAME.split('_')[-1].split('.'))
+    else:
+        SAMPLE_RATE =  60000
+    print('SAMPLE_RATE:', SAMPLE_RATE)
+
+    # connect to bucket and get file
     s3_data = os.path.join(PATH_DEST, FILE_NAME)
+    S3_BUCKET = get_s3_bucket()
     key = S3_BUCKET.get_key(s3_data)
 
     try:
@@ -122,17 +126,16 @@ def get_content():
         print('File not found')
         return 'File not found'
 
-    #'#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/'
-    #'#1HSM/ROT/vPodPRO/#1內冷式ROT Roller WS_vpod/2020/08/01/'
 
-    #'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-28_25600.bin'
-    #'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-26_25600.bin'
 
+
+    # decompress tdms/bin file, load as pandas dataframe
     if '_vpod' in DEVICE_NAME:
-        DATA_DF, DATA_LENGTH = convert_bin (FILE_NAME, DISPLAY_POINT)
+        DATA_DF, DATA_LENGTH = convert_bin (FILE_NAME)
     else:
-        DATA_DF, DATA_LENGTH = convert_tdms (FILE_NAME, DISPLAY_POINT)
+        DATA_DF, DATA_LENGTH = convert_tdms (FILE_NAME)
 
+    # add by Dr. Ho
     if SignalType=='velocity':
         print('velocity change, size from:')
         print(DATA_DF.shape)
@@ -142,16 +145,19 @@ def get_content():
         print(DATA_DF.values)
         print(type(DATA_DF.values))
 
+
     # calculate start-time and end-time for grafana representation
-    S3_BUCKET = get_s3_bucket()
+    #S3_BUCKET = get_s3_bucket()
 
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
     TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
     TIME_START = TIME_START - datetime.timedelta(hours=8)
     TIME_START = TIME_START.timestamp() * 1000
     TIME_DELTA = float(float(DATA_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
+
     print ('Grafana x-axis TIME_START=', TIME_START)
-    print('Datatime='+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    print ('Grafana x-axis TIME_DELTA=', TIME_DELTA)
+    #print('Datatime='+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     # delete file which stored in local
     os.remove(FILE_NAME)
@@ -161,7 +167,7 @@ def get_content():
 
     return RETURN
 
-def convert_tdms (filename, DISPLAYPOINT):
+def convert_tdms (filename):
     bytes_read = TdmsFile(filename)
     
     tdms_groups = bytes_read.groups()
@@ -187,7 +193,7 @@ def convert_tdms (filename, DISPLAYPOINT):
 
     return return_df, file_length
 
-def convert_bin (filename, DISPLAYPOINT):
+def convert_bin (filename):
     bytes_read = open(filename, "rb").read()
     size = [hexint(bytes_read[(i*4):((i+1)*4)]) for i in range(2)]
     signal = [struct.unpack('f',bytes_read[(i*4):((i+1)*4)]) for i in range(2,2+size[0]*size[1])]
