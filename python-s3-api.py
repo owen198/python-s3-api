@@ -129,9 +129,11 @@ def get_content():
     #'Raw Data-#1內冷式ROT Roller WS_vpod-00-56-26_25600.bin'
 
     if '_vpod' in DEVICE_NAME:
-        DATA_DF, DATA_LENGTH = convert_bin(FILE_NAME, DISPLAY_POINT)
+        DATA_DF, DATA_LENGTH = convert_bin (FILE_NAME, DISPLAY_POINT)
     else:
-        DATA_DF,DATA_LENGTH = convert_tdms(FILE_NAME, DISPLAY_POINT)
+        DATA_DF, DATA_LENGTH = convert_tdms (FILE_NAME, DISPLAY_POINT)
+
+    print ('data_lenght=', DATA_LENGTH)
 
     if SignalType=='velocity':
         print('velocity change, size from:')
@@ -179,7 +181,8 @@ def convert_tdms (filename, DISPLAYPOINT):
     return_df = return_df.T
 
     file_length = len(return_df.columns) 
-    length = file_length / DISPLAYPOINT
+
+    #length = file_length / DISPLAYPOINT
 
     return return_df, file_length
 
@@ -193,7 +196,7 @@ def convert_bin (filename, DISPLAYPOINT):
     return_df = return_df.T
     file_length = len(return_df)
 
-    length = file_length / DISPLAYPOINT
+    #length = file_length / DISPLAYPOINT
 
     return return_df, file_length
 
@@ -343,121 +346,37 @@ def get_velocity_mms_from_acceleration_g(data, TS):
     print('Vel=',velocity)
     return velocity
 
-def convert_equ_name (EQU_NAME):
-    
-    ## Connection Information
-    WISE_PAAS_INSTANCE = 'fomos.csc.com.tw'
-    ENDPOINT_SSO = 'portal-sso'
-    ENDPOINT_APM = 'api-apm-csc-srp'
-
-    payload = dict()
-    payload['username'] = 'william.cheng@advantech.com.tw'
-    payload['password'] = 'Tzukai3038!'
-
-
-    ## Get Token through SSO Login
-    resp_sso = requests.post('https://' + ENDPOINT_SSO + '.' + WISE_PAAS_INSTANCE + '/v2.0/auth/native', 
-                     json=payload,
-                     verify=False)
-
-    header = dict()
-    header['content-type'] = 'application/json'
-    header['Authorization'] = 'Bearer ' + resp_sso.json()['accessToken']
-
-
-    ## Get NodeID by EQU_NAME
-    APM_NODEID = 'https://' + ENDPOINT_APM + '.' + WISE_PAAS_INSTANCE + '/topo/progeny/node'
-
-    param = dict()
-    param['topoName'] = 'MAIN_CSC'
-    param['path'] = '/'
-    param['type'] = 'layer'
-    param['layerName'] = 'Machine'
-
-    resp_apm_nodeid = requests.get(APM_NODEID, 
-                     params=param,
-                     headers=header,
-                     verify=False)
-
-    ## Retrive NodeID
-    resp_apm_nodeid_json = resp_apm_nodeid.json()
-    node_id_df = pd.DataFrame(resp_apm_nodeid_json)
-    node_id_df = node_id_df[['id', 'name']]
-
-    apm_nodeid = int(node_id_df.loc[node_id_df['name'] == EQU_NAME]['id'])
-    
-
-    ## Get EQU_ID by NodeID
-    APM_TOPO_INFO = 'https://' + ENDPOINT_APM + '.' + WISE_PAAS_INSTANCE + '/topo/node/detail/info'
-
-    param = dict()
-    param['id'] = apm_nodeid
-
-    resp_apm_feature = requests.get(APM_TOPO_INFO, 
-                     params=param,
-                     headers=header,
-                     verify=False)
-
-    ## Retrive EQU_ID
-    resp_tag = resp_apm_feature.json()['dtInstance']['feature']['monitor']
-    feature_list = pd.DataFrame(resp_tag)['tag'].str.split('@', expand=True)[2].sort_values()
-    EQU_ID = str(resp_apm_feature.json()['dtInstance']['property']['iotSense']['deviceId']).split('@')[2]
-
-    return EQU_ID
-
-
 
 def read_MongoDB_data(EQU_ID,
                        time_start='', 
                        time_end=''):
 
 
-    host = '10.100.10.1'
-    port = '27017'
-    dbname = 'd21d5987-3b65-4fae-9b02-79f72b39b735'
-    user = '0c1e58e3-8643-4ff3-8633-7820f10f4902'
-    password = 'SPRXaEL2RIIeve2lsHV9oAjCc'
+    mgdb_host = '10.100.10.1'
+    mgdb_port = '27017'
+    mgdb_db = 'd21d5987-3b65-4fae-9b02-79f72b39b735'
+    mgdb_user = '0c1e58e3-8643-4ff3-8633-7820f10f4902'
+    mgdb_pass= 'SPRXaEL2RIIeve2lsHV9oAjCc'
     mgdb_collection = 'y4_features'
-    #Example: read_influxdb_data(ChannelName='1Y520210200')
-    #Example: read_influxdb_data(ChannelName='1Y520210200',time_start='2018-05-28',time_end='2018-05-29')
     
-    client = MongoClient('mongodb://%s:%s@%s/%s' % (user, password, host, dbname))
+    client = MongoClient('mongodb://%s:%s@%s/%s' % (mgdb_user, mgdb_pass, mgdb_host, mgdb_db))
 
-    db = client[dbname]
+    db = client[mgdb_db]
     collection = db[mgdb_collection]
 
     measurement = db.list_collection_names()
 
-    #mport time
-    #from datetime import datetime, timedelta
-
-    #DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
-    #print("DATE",DATE)
-    #import datetime
-    #DATE_1 = DATE + datetime.timedelta(days=1)
-
-    #DATE=str(DATE)
-    #DATE_1=str(DATE_1)
-
-    #pattern = '%Y-%m-%d'
-    #epoch_DATE = int(time.mktime(time.strptime(DATE, pattern)))
-    #epoch_DATE_1 = int(time.mktime(time.strptime(DATE_1, pattern)))
-    #print("epoch_DATE_1",epoch_DATE_1)
-
     gt = int(datetime.datetime.strptime(time_start + ' 0:0:0' , '%Y-%m-%d %H:%M:%S').strftime('%s'))
     lt = int(datetime.datetime.strptime(time_end + ' 23:59:59', '%Y-%m-%d %H:%M:%S').strftime('%s'))
-
-    print(gt, lt)
 
     data = pd.DataFrame(list(collection.find({
         "$and":[ 
             { 'timestamp': {'$gt':gt, '$lt': lt} }, 
             { 'device': EQU_ID } ] })))
             
-    print('length', len(data))
+    print('data length in MongoDB', len(data))
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
     
-
     return measurement, data
 
 if __name__ == '__main__':
