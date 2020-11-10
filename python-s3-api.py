@@ -428,8 +428,8 @@ def read_MongoDB_data(EQU_ID,
 
     measurement = db.list_collection_names()
 
-    import time
-    from datetime import datetime, timedelta
+    #mport time
+    #from datetime import datetime, timedelta
 
     #DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
     #print("DATE",DATE)
