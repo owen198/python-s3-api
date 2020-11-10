@@ -408,17 +408,16 @@ def convert_equ_name (EQU_NAME):
 
 
 def read_MongoDB_data(EQU_ID,
-                        host = '10.100.10.1',
-                       port = '27017',
-                       dbname = 'd21d5987-3b65-4fae-9b02-79f72b39b735',
                        time_start='', 
-                       time_end='', 
-                       user = '0c1e58e3-8643-4ff3-8633-7820f10f4902',
-                       password = 'SPRXaEL2RIIeve2lsHV9oAjCc',
-                       mgdb_collection = 'y4_features'
-                       
-                       ):
-    
+                       time_end=''):
+
+
+    host = '10.100.10.1'
+    port = '27017'
+    dbname = 'd21d5987-3b65-4fae-9b02-79f72b39b735'
+    user = '0c1e58e3-8643-4ff3-8633-7820f10f4902'
+    password = 'SPRXaEL2RIIeve2lsHV9oAjCc'
+    mgdb_collection = 'y4_features'
     #Example: read_influxdb_data(ChannelName='1Y520210200')
     #Example: read_influxdb_data(ChannelName='1Y520210200',time_start='2018-05-28',time_end='2018-05-29')
     
@@ -432,22 +431,22 @@ def read_MongoDB_data(EQU_ID,
     import time
     from datetime import datetime, timedelta
 
-    DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
-    print("DATE",DATE)
-    import datetime
-    DATE_1 = DATE + datetime.timedelta(days=1)
+    #DATE=datetime.strptime(DATE, "%Y-%m-%d").date()
+    #print("DATE",DATE)
+    #import datetime
+    #DATE_1 = DATE + datetime.timedelta(days=1)
 
-    DATE=str(DATE)
-    DATE_1=str(DATE_1)
+    #DATE=str(DATE)
+    #DATE_1=str(DATE_1)
 
-    pattern = '%Y-%m-%d'
-    epoch_DATE = int(time.mktime(time.strptime(DATE, pattern)))
-    epoch_DATE_1 = int(time.mktime(time.strptime(DATE_1, pattern)))
-    print("epoch_DATE_1",epoch_DATE_1)
+    #pattern = '%Y-%m-%d'
+    #epoch_DATE = int(time.mktime(time.strptime(DATE, pattern)))
+    #epoch_DATE_1 = int(time.mktime(time.strptime(DATE_1, pattern)))
+    #print("epoch_DATE_1",epoch_DATE_1)
     data = pd.DataFrame(list(collection.find({
         "$and":[
-            {'timestamp':{"$gte":epoch_DATE}},
-            {"timestamp":{"$lte":epoch_DATE_1}},
+            {'timestamp':{"$gte":time_start}},
+            {"timestamp":{"$lte":time_end}},
             {'device':EQU_ID } ] })))
     print('length', len(data))
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
