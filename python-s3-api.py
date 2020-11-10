@@ -96,35 +96,35 @@ def get_content():
     SECOND = str(TS.strftime("%S"))
 
     if '_vpod' in DEVICE_NAME:
-        PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
-        FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
+        prefix = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
+        filename = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
     else:
-        PATH_DEST = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
-        FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
+        prefix = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
+        filename = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
 
-    print("PATH_DEST:",PATH_DEST)
-    print("FILE_NAME:",FILE_NAME)
+    print("prefix:", prefix)
+    print("filename:", filename)
     
 
     
 
     # Define sampling rate
     if '_vpod' in DEVICE_NAME:
-        print(int(FILE_NAME.split('_')[-1].split('.'))[0])
-        SAMPLE_RATE =  int(FILE_NAME.split('_')[-1].split('.'))[0]
+        print(int(filename.split('_')[-1].split('.')[0]))
+        SAMPLE_RATE =  int(filename.split('_')[-1].split('.')[0])
     else:
         SAMPLE_RATE =  60000
     print('SAMPLE_RATE:', SAMPLE_RATE)
 
     # connect to bucket and get file
-    PATH_DEST = PATH_DEST.encode('utf-8').strip()
-    FILE_NAME = FILE_NAME.encode('utf-8').strip()
-    s3_data = os.path.join(PATH_DEST, FILE_NAME)
-    S3_BUCKET = get_s3_bucket()
-    key = S3_BUCKET.get_key(s3_data)
+    prefix = prefix.encode('utf-8').strip()
+    filename = filename.encode('utf-8').strip()
+    s3_data = os.path.join(prefix, filename)
+    #S3_BUCKET = get_s3_bucket()
+    key = get_s3_bucket().get_key(s3_data)
 
     try:
-        key.get_contents_to_filename(FILE_NAME)
+        key.get_contents_to_filename(filename)
     except:
         print('File not found')
         return 'File not found'
@@ -134,9 +134,9 @@ def get_content():
 
     # decompress tdms/bin file, load as pandas dataframe
     if '_vpod' in DEVICE_NAME:
-        DATA_DF, DATA_LENGTH = convert_bin (FILE_NAME)
+        DATA_DF, DATA_LENGTH = convert_bin (filename)
     else:
-        DATA_DF, DATA_LENGTH = convert_tdms (FILE_NAME)
+        DATA_DF, DATA_LENGTH = convert_tdms (filename)
 
     # add by Dr. Ho
     if SignalType=='velocity':
@@ -160,7 +160,7 @@ def get_content():
 
 
     # delete file which stored in local
-    os.remove(FILE_NAME)
+    os.remove(filename)
 
     # combine response json object follow the rule of grafana simpleJSON
     RETURN = combine_return (TIME_START, TIME_DELTA, DATA_DF, DATA_LENGTH)
