@@ -87,30 +87,28 @@ def get_content():
 
 
 
-    # Define s3 prefix
-    if '_vpod' in DEVICE_NAME:
-        PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
-    else:
-        PATH_DEST = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
-    print("PATH_DEST:",PATH_DEST)
-    PATH_DEST=PATH_DEST.encode('utf-8').strip()
-
+    # Define s3 prefix and filename based on timestamp and id
     HOUR = str(TS.strftime("%H"))
     MIN = str(TS.strftime("%M"))
     SECOND = str(TS.strftime("%S"))
-    
-    # Define filename
+
     if '_vpod' in DEVICE_NAME:
+        PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
         FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
     else:
+        PATH_DEST = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
         FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
+
+    print("PATH_DEST:",PATH_DEST)
     print("FILE_NAME:",FILE_NAME)
+    PATH_DEST=PATH_DEST.encode('utf-8').strip()
     FILE_NAME = FILE_NAME.encode('utf-8').strip()
+
     
 
     # Define sampling rate
     if '_vpod' in DEVICE_NAME:
-        SAMPLE_RATE =  int(FILE_NAME.split('_')[-1].split('.'))
+        SAMPLE_RATE =  int(FILE_NAME.decode("utf-8").split('_')[-1].split('.'))
     else:
         SAMPLE_RATE =  60000
     print('SAMPLE_RATE:', SAMPLE_RATE)
@@ -183,7 +181,6 @@ def convert_tdms (filename):
   
     return_df  = pd.DataFrame(MessageData_data_1)
 
-    print('len3',len(return_df))
     #return_df = return_df.T
     #print('len4',len(return_df))
 
