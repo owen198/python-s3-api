@@ -262,7 +262,7 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     
     return str(jsonarr)
 
-def query_timestamp (TYPE, feature, EQU_ID,time_start):
+def query_timestamp (TYPE, feature, EQU_ID, time_start):
     
     ## MongoDB Configuration
 
@@ -294,17 +294,8 @@ def query_timestamp (TYPE, feature, EQU_ID,time_start):
     print('time_end', type(time_end), time_end)
     ## Query MongoDB
     measurement, data = read_MongoDB_data(EQU_ID,
-                                        #host = mgdb_host,
-                                      #port = mgdb_port,
-                                       #dbname = mgdb_database,
-                                       # ChannelName = ChannelName,
-                                       time_start = time_start,
-                                       time_end = time_end,
-                                       #user = mgdb_username,
-                                       #password = mgdb_password,
-                                       DATE = time_start
-                                       
-                                          )
+                                            time_start = time_start,
+                                            time_end = time_end)
 
 
     if TYPE == 'max':
