@@ -88,15 +88,18 @@ def get_content():
 
 
     # Define s3 prefix and filename based on timestamp and id
+    YEAR = str(TS.strftime("%Y"))
+    MONTH = str(TS.strftime("%m"))
+    DAY = str(TS.strftime("%d"))
     HOUR = str(TS.strftime("%H"))
     MIN = str(TS.strftime("%M"))
     SECOND = str(TS.strftime("%S"))
 
     if '_vpod' in DEVICE_NAME:
-        PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+        PATH_DEST = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
         FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
     else:
-        PATH_DEST = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + str(TS.strftime("%Y")) + '/' + str(TS.strftime("%m")) + '/' + str(TS.strftime("%d")) + '/'
+        PATH_DEST = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
         FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
 
     print("PATH_DEST:",PATH_DEST)
