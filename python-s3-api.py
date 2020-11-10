@@ -37,8 +37,7 @@ def test_1():
 @app.route('/query', methods=['POST'])
 def get_content():
     
-    #SAMPLE_RATE = 8192
-    DISPLAY_POINT = 65536   
+    display_points = 65536
 
 
     # retrieve post JSON object
@@ -51,13 +50,13 @@ def get_content():
     #DATE = DATE + datetime.timedelta(hours=8) - datetime.timedelta(days=1)    
     DATE = DATE.strftime('%Y-%m-%d')
 
-    EQU_ID = target_obj.split('@')[0]
+    device_id = target_obj.split('@')[0]
     FEATURE = target_obj.split('@')[1]
     TYPE = target_obj.split('@')[2]
     SignalType = target_obj.split('@')[-1]
-    SPECIFIC_TIME = target_obj.split('@')[-2]
+    precision_time = target_obj.split('@')[-2]
         
-    print('EQU_ID=' + EQU_ID)
+    print('device_id=' + device_id)
     print('Feature=' + FEATURE)
     print('Type=' + TYPE)
     print('SignalType=' + SignalType)
@@ -66,41 +65,41 @@ def get_content():
     
 
     # consider timestamp
-    SPECIFIC_TIME = SPECIFIC_TIME.split(r'\.')[0]
-    DEVICE_NAME = query_device_name (EQU_ID)
-    if '_vpod' in DEVICE_NAME:
+    precision_time = precision_time.split(r'\.')[0]
+    device_name = query_device_name (device_id)
+    if '_vpod' in device_name:
         #bin
         print('user specified time and date')
-        TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
+        TS = datetime.datetime.fromtimestamp(int(precision_time[0:10]))
         TS = TS + datetime.timedelta(hours=8)
     else:
         #tdms
-        if SPECIFIC_TIME.isdigit() and len(SPECIFIC_TIME) > 3:
+        if precision_time.isdigit() and len(precision_time) > 3:
             print('user specified time and date')
-            TS = datetime.datetime.fromtimestamp(int(SPECIFIC_TIME[0:10]))
+            TS = datetime.datetime.fromtimestamp(int(precision_time[0:10]))
             TS = TS + datetime.timedelta(hours=8)
         else:
             print('user specified by query')
-            TS = query_timestamp (TYPE, FEATURE, EQU_ID, DATE)
+            TS = query_timestamp (TYPE, FEATURE, device_id, DATE)
 
     print('Feature assorcated timestamp in Query Date=', TS)
 
 
 
     # Define s3 prefix and filename based on timestamp and id
-    YEAR = str(TS.strftime("%Y"))
-    MONTH = str(TS.strftime("%m"))
-    DAY = str(TS.strftime("%d"))
-    HOUR = str(TS.strftime("%H"))
-    MIN = str(TS.strftime("%M"))
-    SECOND = str(TS.strftime("%S"))
+    year = str(TS.strftime("%Y"))
+    month = str(TS.strftime("%m"))
+    day = str(TS.strftime("%d"))
+    hour = str(TS.strftime("%H"))
+    minutes = str(TS.strftime("%M"))
+    second = str(TS.strftime("%S"))
 
-    if '_vpod' in DEVICE_NAME:
-        prefix = '#1HSM/ROT/vPodPRO/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
-        filename = 'Raw Data-' + DEVICE_NAME + '-' + HOUR + '-'+ MIN + '-' + SECOND + '_25600.bin'
+    if '_vpod' in device_name:
+        prefix = '#1HSM/ROT/vPodPRO/' + device_name + '/' + year + '/' + month + '/' + day + '/'
+        filename = 'Raw Data-' + device_name + '-' + hour + '-'+ minutes + '-' + second + '_25600.bin'
     else:
-        prefix = '#1HSM/ROT/TDMS/' + DEVICE_NAME + '/' + YEAR + '/' + MONTH + '/' + DAY + '/'
-        filename = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
+        prefix = '#1HSM/ROT/TDMS/' + device_name + '/' + year + '/' + month + '/' + day + '/'
+        filename = 'Raw Data-' + device_name + '-'+ hour + '-'+ minutes + '-' + second + '.tdms'
 
     print("prefix:", prefix)
     print("filename:", filename)
@@ -111,10 +110,10 @@ def get_content():
     # Define sampling rate
     if '_vpod' in DEVICE_NAME:
         print(int(filename.split('_')[-1].split('.')[0]))
-        SAMPLE_RATE =  int(filename.split('_')[-1].split('.')[0])
+        sampling_rate =  int(filename.split('_')[-1].split('.')[0])
     else:
-        SAMPLE_RATE =  60000
-    print('SAMPLE_RATE:', SAMPLE_RATE)
+        sampling_rate =  60000
+    print('sampling_rate:', sampling_rate)
 
     # connect to bucket and get file
     prefix = prefix.encode('utf-8').strip()
@@ -133,39 +132,40 @@ def get_content():
 
 
     # decompress tdms/bin file, load as pandas dataframe
-    if '_vpod' in DEVICE_NAME:
-        DATA_DF, DATA_LENGTH = convert_bin (filename)
+    if '_vpod' in device_name:
+        data_df, data_len = convert_bin (filename)
     else:
-        DATA_DF, DATA_LENGTH = convert_tdms (filename)
+        data_df, data_len = convert_tdms (filename)
 
     # add by Dr. Ho
     if SignalType=='velocity':
         print('velocity change, size from:')
-        print(DATA_DF.shape)
-        DATA_DF = pd.DataFrame(get_velocity_mms_from_acceleration_g(DATA_DF.values.T,1.0/8192)).T
+        print(data_df.shape)
+        data_df = pd.DataFrame(get_velocity_mms_from_acceleration_g(data_df.values.T,1.0/8192)).T
         print('velocity change, size to:')
-        print(DATA_DF.shape)
-        print(DATA_DF.values)
-        print(type(DATA_DF.values))
+        print(data_df.shape)
+        print(data_df.values)
+        print(type(data_df.values))
 
 
     # calculate start-time and end-time for grafana representation
-    TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
-    TIME_START = datetime.datetime.strptime(TIME_START, '%Y-%m-%dT%H:%M:%S')
-    TIME_START = TIME_START - datetime.timedelta(hours=8)
-    TIME_START = TIME_START.timestamp() * 1000
-    TIME_DELTA = float(float(DATA_LENGTH / SAMPLE_RATE) / DISPLAY_POINT) * 1000
-    print ('Grafana x-axis TIME_START=', TIME_START)
-    print ('Grafana x-axis TIME_DELTA=', TIME_DELTA)
+    time_start = TS.strftime('%Y-%m-%d') + 'T' + hour + ':' + minutes + ':' + second
+    time_start = datetime.datetime.strptime(time_start, '%Y-%m-%dT%H:%M:%S')
+    time_start = time_start - datetime.timedelta(hours=8)
+    time_start = time_start.timestamp() * 1000
+    time_delta = float(float(data_len / sampling_rate) / display_points) * 1000
+    print ('Grafana x-axis time_start=', time_start)
+    print ('Grafana x-axis time_delta=', time_delta)
 
 
     # delete file which stored in local
     os.remove(filename)
 
     # combine response json object follow the rule of grafana simpleJSON
-    RETURN = combine_return (TIME_START, TIME_DELTA, DATA_DF, DATA_LENGTH)
+    return combine_return (time_start, time_delta, data_df, data_len)
 
-    return RETURN
+
+
 
 def convert_tdms (filename):
     bytes_read = TdmsFile(filename)
