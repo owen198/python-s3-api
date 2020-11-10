@@ -178,7 +178,10 @@ def convert_tdms (filename, DISPLAYPOINT):
     # MessageData_data_1 
   
     return_df  = pd.DataFrame(MessageData_data_1)
+
+    print('len3',len(return_df))
     return_df = return_df.T
+    print('len4',len(return_df))
 
     file_length = len(return_df.columns) 
 
@@ -256,7 +259,6 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     print('len2', len(jsonobj_mean))
 
     for i in range(0, BIN_LENGTH):
-        print(i)
         datapoints_array_mean.append([jsonobj_mean['data'][i][0], TIME_START])
         TIME_START = float(TIME_START) + TIME_DELTA
 
