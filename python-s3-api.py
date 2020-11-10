@@ -3,25 +3,22 @@ import boto.s3.connection
 from boto.s3.key import Key
 
 import pandas as pd
+import pandas.io.sql as sqlio
+
 import numpy as np
 import os
 import json
 import datetime
-
-from nptdms import TdmsFile
-# import binascii
-
+import binascii
 import struct
-
 import requests
-
-from pymongo import MongoClient
-
-# import scipy
+import psycopg2
 
 from flask import Flask
 from flask import request
 from flask import jsonify
+from nptdms import TdmsFile
+from pymongo import MongoClient
 # from influxdb import DataFrameClient
 
 app = Flask(__name__)
@@ -95,7 +92,12 @@ def get_content():
     print("PATH_DEST:",PATH_DEST)
     PATH_DEST=PATH_DEST.encode('utf-8').strip()
 
-    FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST,EQU_ID)
+    #FILE_NAME = query_file (TS, S3_BUCKET, PATH_DEST,EQU_ID)
+    HOUR = str(TS.strftime("%H"))
+    MIN = str(TS.strftime("%M"))
+    SECOND = str(TS.strftime("%S"))
+    print ('Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms')
+    FILE_NAME = 'Raw Data-' + DEVICE_NAME + '-'+ HOUR + '-'+ MIN + '-' + SECOND + '.tdms'
     print("FILE_NAME:",FILE_NAME)
     FILE_NAME=FILE_NAME.encode('utf-8').strip()
     print("FILE_NAME:",FILE_NAME)    
@@ -130,31 +132,31 @@ def get_content():
     # insert_to_influxdb(tdms_DF)
 
     # calculate start-time and end-time for grafana representation
-    S3_BUCKET = get_s3_bucket()
-    filename = 'tag_list.csv'
-    tag_list = os.path.join('/', filename)
-    key =S3_BUCKET.get_key(tag_list)
-    key.get_contents_to_filename(filename)
-    df = pd.read_csv('tag_list.csv', encoding='big5')
-    df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
-    df1 = df.loc[ df['ID Number'] == EQU_ID ]
-    df1 = df1.values.tolist()
-    Channel_Name = df1[0][0]
-    station = df1[0][3]
-    os.remove(filename)
+    # S3_BUCKET = get_s3_bucket()
+    # filename = 'tag_list.csv'
+    # tag_list = os.path.join('/', filename)
+    # key =S3_BUCKET.get_key(tag_list)
+    #key.get_contents_to_filename(filename)
+    # df = pd.read_csv('tag_list.csv', encoding='big5')
+    # df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
+    # df1 = df.loc[ df['ID Number'] == EQU_ID ]
+    # df1 = df1.values.tolist()
+    # Channel_Name = df1[0][0]
+    # station = df1[0][3]
+    # os.remove(filename)
     
-    if station == '1FM':
-        HOUR = FILE_NAME.decode().split('-')[2]
-        MIN = FILE_NAME.decode().split('-')[3]
-        SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
-    elif station =='2FM':
-        HOUR = FILE_NAME.decode().split('-')[2]
-        MIN = FILE_NAME.decode().split('-')[3]
-        SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
-    else:    
-        HOUR = FILE_NAME.decode().split('-')[3]
-        MIN = FILE_NAME.decode().split('-')[4]
-        SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
+    # if station == '1FM':
+        # HOUR = FILE_NAME.decode().split('-')[2]
+        # MIN = FILE_NAME.decode().split('-')[3]
+        # SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
+    # elif station =='2FM':
+        # HOUR = FILE_NAME.decode().split('-')[2]
+        # MIN = FILE_NAME.decode().split('-')[3]
+        # SECOND = FILE_NAME.decode().split('-')[4].split('.')[0]
+    # else:    
+        # HOUR = FILE_NAME.decode().split('-')[3]
+        # MIN = FILE_NAME.decode().split('-')[4]
+        # SECOND = FILE_NAME.decode().split('-')[5].split('.')[0]
 
 
     TIME_START = TS.strftime('%Y-%m-%d') + 'T' + HOUR + ':' + MIN + ':' + SECOND
@@ -197,7 +199,7 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
     S3_BUCKET = get_s3_bucket()
     filename = 'tag_list.csv'
     tag_list = os.path.join('/', filename)
-    key =S3_BUCKET.get_key(tag_list)
+    #key =S3_BUCKET.get_key(tag_list)
     key.get_contents_to_filename(filename)
     df = pd.read_csv('tag_list.csv', encoding='big5')
     df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
@@ -205,7 +207,7 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
     df1 = df1.values.tolist()
     Channel_Name = df1[0][0]
     station = df1[0][3]
-    #time 
+    # time 
     os.remove(filename)
     TS_H = TS.strftime('%H')
     TS_M = TS.strftime('%M')
@@ -227,7 +229,7 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
         print("query_file error")
 
     # filename = 'Raw Data-'+ Channel_Name +'-rolling-'+ TS_H + "-"+ TS_M + "-"+ TS_S + ".tdms"
-#     filename = f"Raw Data-{Channel_Name}-rolling-{TS_H}-{TS_M}-{TS_S}.tdms"
+    # filename = f"Raw Data-{Channel_Name}-rolling-{TS_H}-{TS_M}-{TS_S}.tdms"
 
     return filename
 
