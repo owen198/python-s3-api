@@ -447,6 +447,8 @@ def read_MongoDB_data(EQU_ID,
     gt = int(datetime.datetime.strptime(time_start + ' 0:0:0' , '%Y-%m-%d %H:%M:%S').strftime('%s'))
     lt = int(datetime.datetime.strptime(time_end + ' 23:59:59', '%Y-%m-%d %H:%M:%S').strftime('%s'))
 
+    print(gt, lt)
+
     data = pd.DataFrame(list(collection.find({
         "$and":[ 
             { 'timestamp': {'$gt':gt, '$lt': lt} }, 
