@@ -140,13 +140,13 @@ def get_content():
 
     # add by Dr. Ho
     if SignalType=='velocity':
-        print('velocity change, size from:')
-        print(data_df.shape)
-        data_df = pd.DataFrame(get_velocity_mms_from_acceleration_g(data_df.values.T,1.0/8192)).T
-        print('velocity change, size to:')
-        print(data_df.shape)
-        print(data_df.values)
-        print(type(data_df.values))
+        #print('velocity change, size from:')
+        #print(data_df.shape)
+        data_df = pd.DataFrame(get_velocity_mms_from_acceleration_g(data_df.values.T,1.0/sampling_rate)).T
+        #print('velocity change, size to:')
+        #print(data_df.shape)
+        #print(data_df.values)
+        #print(type(data_df.values))
 
     print('data_df.head(5)', data_df.head(5))
     print('length', len(data_df))
