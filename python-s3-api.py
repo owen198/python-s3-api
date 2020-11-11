@@ -335,12 +335,12 @@ def query_timestamp (TYPE, feature, device_id, time_start):
     else:
         max_value = data.sort_values(by=[feature])[feature].iloc[0]
 
-    print('value=', max_value)
+    #print('value=', max_value)
     ## Retrive timestamp
     index_series = data[feature]
     dt64 = index_series[index_series == max_value].index.values[0]
     TS = datetime.datetime.utcfromtimestamp(dt64.tolist()/1e9) 
-    print('TS=',TS)
+    #print('TS=',TS)
     return TS
     
     
@@ -366,11 +366,11 @@ def get_velocity_mms_from_acceleration_g(data, TS):
     data = butter_highpass_filter(data, cutoff=5, fs=1/TS, order=3)
     velocity = cumtrapz(data, dx=TS, initial=0)
     velocity = (velocity - velocity.mean()) * 9806
-    print('TS=',TS)
-    print('DATA=',data)
-    print(type(data))
+    #print('TS=',TS)
+    #print('DATA=',data)
+    #print(type(data))
     # print('Acc=',acceleration)
-    print('Vel=',velocity)
+    #print('Vel=',velocity)
     return velocity
 
 
