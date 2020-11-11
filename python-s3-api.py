@@ -156,7 +156,8 @@ def get_content():
     time_start = datetime.datetime.strptime(time_start, '%Y-%m-%dT%H:%M:%S')
     time_start = time_start - datetime.timedelta(hours=8)
     time_start = time_start.timestamp() * 1000
-    time_delta = float(float(data_len / sampling_rate) / display_points) * 1000
+    #time_delta = float(float(data_len / sampling_rate) / display_points) * 1000
+    time_delta = float(1 / sampling_rate) * 1000
 
     print ('Grafana x-axis time_start=', time_start)
     print ('Grafana x-axis time_delta=', time_delta)
