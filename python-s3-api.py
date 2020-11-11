@@ -148,6 +148,8 @@ def get_content():
         print(data_df.values)
         print(type(data_df.values))
 
+    print('data_df.head(5)', data_df.head(5))
+    print('length', len(data_df))
 
     # calculate start-time and end-time for grafana representation
     time_start = TS.strftime('%Y-%m-%d') + 'T' + hour + ':' + minutes + ':' + second
@@ -155,8 +157,6 @@ def get_content():
     time_start = time_start - datetime.timedelta(hours=8)
     time_start = time_start.timestamp() * 1000
     time_delta = float(float(data_len / sampling_rate) / display_points) * 1000
-
-    print ('df=', len(data_df)/sampling_rate)
 
     print ('Grafana x-axis time_start=', time_start)
     print ('Grafana x-axis time_delta=', time_delta)
