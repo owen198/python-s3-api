@@ -104,16 +104,7 @@ def get_content():
     print("prefix:", prefix)
     print("filename:", filename)
     
-
-    # Define sampling rate
-    if '_vpod' in device_name:
-        sampling_rate =  int(filename.split('_')[-1].split('.')[0])
-    else:
-        ti = read_lv2_names(filename)[0]
-        properties = read_lv2_properties(filename,ti)
-        dt = properties[u'wf_increment']
-        sampling_rate = 1 / dt
-    print('sampling_rate:', sampling_rate)
+    filename_fs = filename
 
     # connect to bucket and get file
     prefix = prefix.encode('utf-8').strip()
@@ -129,6 +120,15 @@ def get_content():
         return 'File not found'
 
 
+    # Define sampling rate
+    if '_vpod' in device_name:
+        sampling_rate =  int(filename_fs.split('_')[-1].split('.')[0])
+    else:
+        ti = read_lv2_names(filename_fs)[0]
+        properties = read_lv2_properties(filename_fs,ti)
+        dt = properties[u'wf_increment']
+        sampling_rate = 1 / dt
+    print('sampling_rate:', sampling_rate)
 
 
     # decompress tdms/bin file, load as pandas dataframe
@@ -164,9 +164,11 @@ def get_content():
     # combine response json object follow the rule of grafana simpleJSON
     return combine_return (time_start, time_delta, data_df, data_len)
 
+
+
 def read_lv2_properties(filename, lv2_name):    
     tdms_file = TdmsFile(filename)
-    tdms_file = TdmsFile(filename)
+    #tdms_file = TdmsFile(filename)
     objNames = list(tdms_file.objects.keys())
     #wh_lv3 = find([len(obj.split('/'))==3 for obj in objNames[:]])
     wh_lv3 = np.argwhere([len(obj.split('/'))==3 for obj in objNames[:]])[0]
@@ -177,6 +179,8 @@ def read_lv2_properties(filename, lv2_name):
     wh = wh_lv3[wh]
     ret = tdms_file.objects[objNames[wh]].properties    
     return ret
+
+
 
 def read_lv2_names(filename):    
     tdms_file = TdmsFile(filename)
