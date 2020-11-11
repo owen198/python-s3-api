@@ -105,14 +105,14 @@ def get_content():
     print("filename:", filename)
     
 
-    
-
     # Define sampling rate
     if '_vpod' in device_name:
-        print(int(filename.split('_')[-1].split('.')[0]))
         sampling_rate =  int(filename.split('_')[-1].split('.')[0])
     else:
-        sampling_rate =  60000
+        ti = read_lv2_names(filename)[0]
+        properties = read_lv2_properties(filename,ti)
+        dt = properties[u'wf_increment']
+        sampling_rate = 1 / dt
     print('sampling_rate:', sampling_rate)
 
     # connect to bucket and get file
@@ -164,7 +164,25 @@ def get_content():
     # combine response json object follow the rule of grafana simpleJSON
     return combine_return (time_start, time_delta, data_df, data_len)
 
+def read_lv2_properties(filename, lv2_name):    
+    tdms_file = TdmsFile(filename)
+    tdms_file = TdmsFile(filename)
+    objNames = list(tdms_file.objects.keys())
+    #wh_lv3 = find([len(obj.split('/'))==3 for obj in objNames[:]])
+    wh_lv3 = np.argwhere([len(obj.split('/'))==3 for obj in objNames[:]])[0]
+    lv3s = [objNames[i] for i in wh_lv3]
+    lv2_names = [lv.split('/')[1] for lv in lv3s]
+    #wh = find([n==lv2_name for n in lv2_names])[0]
+    wh = np.argwhere([n==lv2_name for n in lv2_names])[0][0]
+    wh = wh_lv3[wh]
+    ret = tdms_file.objects[objNames[wh]].properties    
+    return ret
 
+def read_lv2_names(filename):    
+    tdms_file = TdmsFile(filename)
+    objNames = list(tdms_file.objects.keys())
+    lv2 = list(set([obj.split('/')[1] for obj in objNames[1:]]))
+    return lv2
 
 
 def convert_tdms (filename):
@@ -235,16 +253,16 @@ def get_s3_bucket ():
     SECRET_KEY = 'Bhw0MdOHfFL9h03u3epl4AoLxl/sOu0UvELUBL1h'
     HOST = 'object.csc.com.tw'
     PORT = 9020
-#     BUCKET_NAME = 'fomos-w4'
-    BUCKET_NAME = 'Y4_HSM'    
+    BUCKET_NAME = 'Y4_HSM'   
+
     # establish connection between blob storage and this client app
     s3_connection = boto.connect_s3(
-                   aws_access_key_id = ACCESS_KEY,
+                    aws_access_key_id = ACCESS_KEY,
                     aws_secret_access_key = SECRET_KEY,
-                   host = HOST,
-                   port = PORT,
-                   is_secure=False,               # uncomment if you are not using ssl
-                   calling_format = boto.s3.connection.OrdinaryCallingFormat(),
+                    host = HOST,
+                    port = PORT,
+                    is_secure=False,               # uncomment if you are not using ssl
+                    calling_format = boto.s3.connection.OrdinaryCallingFormat(),
                  )
     bucket = s3_connection.get_bucket(BUCKET_NAME, validate=False)
 
@@ -272,7 +290,7 @@ def combine_return (TIME_START, TIME_DELTA, BIN_DF, BIN_LENGTH):
     
     return str(jsonarr)
 
-def query_timestamp (TYPE, feature, EQU_ID, time_start):
+def query_timestamp (TYPE, feature, device_id, time_start):
     
     ## MongoDB Configuration
 
@@ -298,12 +316,10 @@ def query_timestamp (TYPE, feature, EQU_ID, time_start):
 
     time_start = time_start.replace("/", "-")
     time_end = datetime.datetime.strptime(time_start, '%Y-%m-%d') + datetime.timedelta(days=1)
-#     print('time_end', type(time_end), time_end)
     time_end = time_end.strftime("%Y-%m-%d")
-    print("time_start",time_start)
-    print('time_end', type(time_end), time_end)
+
     ## Query MongoDB
-    measurement, data = read_MongoDB_data(EQU_ID,
+    measurement, data = read_MongoDB_data (device_id,
                                             time_start = time_start,
                                             time_end = time_end)
 
@@ -354,7 +370,7 @@ def get_velocity_mms_from_acceleration_g(data, TS):
     return velocity
 
 
-def read_MongoDB_data(EQU_ID,
+def read_MongoDB_data(device_id,
                        time_start='', 
                        time_end=''):
 
@@ -379,7 +395,7 @@ def read_MongoDB_data(EQU_ID,
     data = pd.DataFrame(list(collection.find({
         "$and":[ 
             { 'timestamp': {'$gt':gt, '$lt': lt} }, 
-            { 'device': EQU_ID } ] })))
+            { 'device': device_id } ] })))
             
     print('data length in MongoDB', len(data))
     data.index = (pd.to_datetime(data['timestamp'], unit='s'))
