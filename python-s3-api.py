@@ -38,12 +38,13 @@ def test_1():
 @app.route('/query', methods=['POST'])
 def get_content():
     
-    display_points = 65536
+    #display_points = 65536
 
 
     # retrieve post JSON object
     jsonobj = request.get_json(silent=True)
     print(jsonobj)
+
     target_obj = jsonobj['targets'][0]['target']
     date_obj = jsonobj['range']['from']
     DATE = datetime.datetime.strptime(date_obj, '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -147,9 +148,6 @@ def get_content():
         #print(data_df.shape)
         #print(data_df.values)
         #print(type(data_df.values))
-
-    print('data_df.head(5)', data_df.head(5))
-    print('length', len(data_df))
 
     # calculate start-time and end-time for grafana representation
     time_start = TS.strftime('%Y-%m-%d') + 'T' + hour + ':' + minutes + ':' + second
