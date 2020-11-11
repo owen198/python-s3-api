@@ -33,7 +33,8 @@ def test_1():
 
     return jsonify({'msg': str_msg}), 200
 
-#@app.route('/blob/api/v1.0/get_content', methods=['POST'])
+
+
 @app.route('/query', methods=['POST'])
 def get_content():
     
@@ -154,6 +155,9 @@ def get_content():
     time_start = time_start - datetime.timedelta(hours=8)
     time_start = time_start.timestamp() * 1000
     time_delta = float(float(data_len / sampling_rate) / display_points) * 1000
+
+    print ('df=', len(data_df)/sampling_rate)
+
     print ('Grafana x-axis time_start=', time_start)
     print ('Grafana x-axis time_delta=', time_delta)
 
