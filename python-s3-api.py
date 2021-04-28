@@ -238,7 +238,7 @@ def get_s3_bucket ():
 
 def query_smb_byDigit (EQU_ID):
     S3_BUCKET = get_s3_bucket()
-    filename = 'tag_list.csv'
+    filename = 'tag_list_2.csv'
     tag_list = os.path.join('/', filename)
     key =S3_BUCKET.get_key(tag_list)
     key.get_contents_to_filename(filename)
