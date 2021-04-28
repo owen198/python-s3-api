@@ -127,11 +127,11 @@ def get_content():
 
     # calculate start-time and end-time for grafana representation
     S3_BUCKET = get_s3_bucket()
-    filename = 'tag_list.csv'
+    filename = 'tag_list_2.csv'
     tag_list = os.path.join('/', filename)
     key =S3_BUCKET.get_key(tag_list)
     key.get_contents_to_filename(filename)
-    df = pd.read_csv('tag_list.csv', encoding='big5')
+    df = pd.read_csv('tag_list_2.csv', encoding='big5')
     df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
     df1 = df.loc[ df['ID Number'] == EQU_ID ]
     df1 = df1.values.tolist()
@@ -171,11 +171,11 @@ def get_content():
 
 def query_file (TS, bucket, PATH_DEST,EQU_ID):
     S3_BUCKET = get_s3_bucket()
-    filename = 'tag_list.csv'
+    filename = 'tag_list_2.csv'
     tag_list = os.path.join('/', filename)
     key =S3_BUCKET.get_key(tag_list)
     key.get_contents_to_filename(filename)
-    df = pd.read_csv('tag_list.csv', encoding='big5')
+    df = pd.read_csv('tag_list_2.csv', encoding='big5')
     df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
     df1 = df.loc[ df['ID Number'] == EQU_ID ]
     df1 = df1.values.tolist()
@@ -243,7 +243,7 @@ def query_smb_byDigit (EQU_ID):
     key =S3_BUCKET.get_key(tag_list)
     key.get_contents_to_filename(filename)
 
-    df = pd.read_csv('tag_list.csv', encoding='big5')
+    df = pd.read_csv('tag_list_2.csv', encoding='big5')
 
     df.columns = ['Channel_Name','ID Number','產線','Station','','Device','','Channel_Number']
     df['line'] = 0
