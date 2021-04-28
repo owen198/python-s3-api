@@ -209,12 +209,20 @@ def query_file (TS, bucket, PATH_DEST,EQU_ID):
 
 def get_s3_bucket ():
     # load value of key for access blob container (bucket)
-    ACCESS_KEY = 'cc0b4b06affd4f599dff7607f1556811'
-    SECRET_KEY = 'U7fxYmr8idml083N8zo7JRddXiNbyCmNN'
-    HOST = '192.168.123.226'
-    PORT = 8080
-#     BUCKET_NAME = 'fomos-w4'
-    BUCKET_NAME = 'FOMOS-W4'    
+    #ACCESS_KEY = 'cc0b4b06affd4f599dff7607f1556811'
+    #SECRET_KEY = 'U7fxYmr8idml083N8zo7JRddXiNbyCmNN'
+    #HOST = '192.168.123.226'
+    #PORT = 8080
+    #BUCKET_NAME = 'FOMOS-W4'    
+    
+    # switch to F3_S3
+    ACCESS_KEY = 't7user1'
+    SECRET_KEY = 'Bhw0MdOHfFL9h03u3epl4AoLxl/sOu0UvELUBL1h'
+    HOST = 'object.csc.com.tw'
+    PORT = 9020
+    BUCKET_NAME = 'W4_FOMOS' 
+    
+    
     # establish connection between blob storage and this client app
     s3_connection = boto.connect_s3(
                    aws_access_key_id = ACCESS_KEY,
